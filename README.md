@@ -98,14 +98,13 @@ npx electron-builder --mac --x64 --publish never
 # Buiild for macOS - Apple ARM CPUs (requires macOS)
 npx electron-builder --mac --arm64 --publish never
 
-
 # Build for the current platform you are running on
 npx electron-builder --publish never
 ```
 
 _(Note: You can also add these commands to the `"scripts"` section of your `package.json` to run them via `npm run build:win`, etc.)_
 
-All compiled executables and installers will be output to the `dist/` (or default `electron-builder` output) directory.
+All compiled executables and installers will be output to the `build/` (or default `electron-builder` output) directory.
 
 ---
 
