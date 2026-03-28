@@ -1,0 +1,279 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Disvoke</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div class="titlebar">
+      <div class="titlebar-brand">
+        <img src="../resources/logo.png" width="18" height="18" />
+        <span data-i18n-brand>Disvoke</span>
+      </div>
+      <div class="titlebar-controls">
+        <button class="tb-btn" id="btn-min" data-i18n-title="titlebar.minimize">─</button>
+        <button class="tb-btn" id="btn-max" data-i18n-title="titlebar.maximize">□</button>
+        <button class="tb-btn danger" id="btn-close" data-i18n-title="titlebar.close">✕</button>
+      </div>
+    </div>
+    <!-- Main layout -->
+    <div class="layout">
+      <!-- Sidebar navigation -->
+      <nav class="sidebar">
+        <button class="nav-item active" data-page="dashboard">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7" />
+            <rect x="14" y="3" width="7" height="7" />
+            <rect x="3" y="14" width="7" height="7" />
+            <rect x="14" y="14" width="7" height="7" />
+          </svg>
+          <span data-i18n="nav.dashboard">Dashboard</span>
+        </button>
+        <button class="nav-item" data-page="pack">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+          </svg>
+          <span data-i18n="nav.pack">Data Pack</span>
+        </button>
+        <button class="nav-item" data-page="review">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 11l3 3L22 4" />
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+          </svg>
+          <span data-i18n="nav.review">Review</span>
+        </button>
+        <button class="nav-item" data-page="progress">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+          </svg>
+          <span data-i18n="nav.progress">Deletion</span>
+        </button>
+        <button class="nav-item" data-page="settings">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3" />
+            <path
+              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06
+                 a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09
+                 A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83
+                 l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09
+                 A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83
+                 l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09
+                 a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83
+                 l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09
+                 a1.65 1.65 0 0 0-1.51 1z"
+            />
+          </svg>
+          <span data-i18n="nav.settings">Settings</span>
+        </button>
+      </nav>
+      <!-- Page content -->
+      <main class="content">
+        <!-- PAGE: Dashboard -->
+        <div class="page active" id="page-dashboard">
+          <h1 class="page-title" data-i18n="dashboard.title">Dashboard</h1>
+          <div class="account-card" id="account-card">
+            <div class="account-avatar" id="acc-avatar">?</div>
+            <div class="account-info">
+              <div class="account-name" id="acc-name" data-i18n="dashboard.notLoggedIn">Not logged in</div>
+              <div class="account-sub" id="acc-sub" data-i18n="dashboard.configureToken">Configure your token in Settings</div>
+            </div>
+            <div class="account-badge" id="acc-badge">—</div>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-num" id="stat-total">—</div>
+              <div class="stat-label" data-i18n="dashboard.statTotal">Total messages</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-num" id="stat-servers">—</div>
+              <div class="stat-label" data-i18n="dashboard.statServers">Servers</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-num" id="stat-dms">—</div>
+              <div class="stat-label" data-i18n="dashboard.statDMs">DM conversations</div>
+            </div>
+            <div class="stat-card accent">
+              <div class="stat-num" id="stat-selected">0</div>
+              <div class="stat-label" data-i18n="dashboard.statSelected">Selected for deletion</div>
+            </div>
+          </div>
+          <div class="quick-actions">
+            <button class="btn btn-primary" id="btn-goto-pack" data-i18n="dashboard.loadPack">Load data pack →</button>
+            <button class="btn btn-outline" id="btn-goto-settings" data-i18n="dashboard.settings">Settings</button>
+          </div>
+        </div>
+        <!-- PAGE: Data Pack -->
+        <div class="page" id="page-pack">
+          <h1 class="page-title" data-i18n="pack.title">Discord Data Pack</h1>
+          <p class="page-sub" data-i18n-html="pack.subtitle"></p>
+          <div class="folder-drop" id="folder-drop">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+            </svg>
+            <div id="folder-path-text" data-i18n="pack.clickToSelect">Click to select folder</div>
+            <button class="btn btn-primary" id="btn-pick-folder" data-i18n="pack.selectFolder">Select folder</button>
+          </div>
+          <div id="pack-filter" class="pack-filter hidden">
+            <h3 data-i18n="pack.filterTitle">Filter deletion scope</h3>
+            <div class="filter-row">
+              <label class="toggle-label">
+                <input type="checkbox" id="filter-servers" checked />
+                <span data-i18n="pack.filterServers">Server messages</span>
+              </label>
+              <label class="toggle-label">
+                <input type="checkbox" id="filter-dms" checked />
+                <span data-i18n="pack.filterDMs">DM messages</span>
+              </label>
+            </div>
+            <div class="filter-row">
+              <label data-i18n="pack.filterSearch">Search in content:</label>
+              <input type="text" class="input-text" id="filter-search" data-i18n-placeholder="pack.filterSearchPlaceholder" />
+            </div>
+            <button class="btn btn-primary" id="btn-apply-filter" data-i18n="pack.applyFilter">Apply & go to review →</button>
+          </div>
+        </div>
+        <!-- PAGE: Review -->
+        <div class="page" id="page-review">
+          <div class="review-header">
+            <h1 class="page-title" data-i18n="review.title">Message Review</h1>
+            <div class="review-actions">
+              <button class="btn btn-sm" id="btn-select-all" data-i18n="review.selectAll">Select all</button>
+              <button class="btn btn-sm" id="btn-deselect-all" data-i18n="review.deselectAll">Deselect all</button>
+              <span class="review-count" id="review-count">0 <span data-i18n="review.selected">selected</span></span>
+            </div>
+          </div>
+          <div class="review-tree" id="review-tree">
+            <div class="empty-state" data-i18n="review.empty">Load a data pack to see messages.</div>
+          </div>
+          <div class="review-footer">
+            <button class="btn btn-danger" id="btn-start-delete" disabled data-i18n="review.deleteBtn">🗑 Delete selected messages</button>
+          </div>
+        </div>
+        <!-- PAGE: Progress -->
+        <div class="page" id="page-progress">
+          <h1 class="page-title" data-i18n="progress.title">Deleting Messages</h1>
+          <div class="progress-summary">
+            <div class="prog-stat">
+              <div class="prog-num" id="prog-deleted">0</div>
+              <div class="prog-label" data-i18n="progress.deleted">Deleted</div>
+            </div>
+            <div class="prog-stat">
+              <div class="prog-num err" id="prog-errors">0</div>
+              <div class="prog-label" data-i18n="progress.errors">Errors</div>
+            </div>
+            <div class="prog-stat">
+              <div class="prog-num" id="prog-remaining">0</div>
+              <div class="prog-label" data-i18n="progress.remaining">Remaining</div>
+            </div>
+          </div>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
+          </div>
+          <div class="progress-status" id="progress-status" data-i18n="progress.ready">Ready to start</div>
+          <div class="log-box" id="log-box"></div>
+          <div class="progress-footer">
+            <button class="btn btn-danger" id="btn-stop-delete" disabled data-i18n="progress.stop">⏹ Stop</button>
+            <button class="btn btn-outline" id="btn-new-session" style="display: none" data-i18n="progress.newSession">↺ New session</button>
+          </div>
+        </div>
+        <!-- PAGE: Settings -->
+        <div class="page" id="page-settings">
+          <h1 class="page-title" data-i18n="settings.title">Settings</h1>
+          <!-- Account section -->
+          <div class="settings-section">
+            <h3 data-i18n="settings.accountSection">Discord Account</h3>
+            <div class="field">
+              <label data-i18n="settings.tokenLabel">Authorization token</label>
+              <div class="input-row">
+                <input type="password" class="input-text" id="set-token" data-i18n-placeholder="settings.tokenPlaceholder" />
+                <button class="btn btn-sm" id="btn-toggle-token" data-i18n="settings.showToken">Show</button>
+              </div>
+              <span class="field-hint" data-i18n="settings.tokenHint"></span>
+            </div>
+            <button class="btn btn-primary" id="btn-validate-token" data-i18n="settings.verifyToken">✓ Verify token</button>
+            <div class="validation-result" id="token-result"></div>
+          </div>
+          <!-- Deletion options section -->
+          <div class="settings-section">
+            <h3 data-i18n="settings.deletionSection">Deletion Options</h3>
+            <div class="field">
+              <label data-i18n="settings.delayLabel">Delay between deletions (seconds)</label>
+              <input type="number" class="input-text" id="set-delay" value="4" min="1" max="30" style="width: 100px" />
+              <span class="field-hint" data-i18n="settings.delayHint"></span>
+            </div>
+          </div>
+          <!-- Batch mode section -->
+          <div class="settings-section">
+            <h3 data-i18n="settings.batchSection">Batch Mode (Anti-Ban)</h3>
+            <div class="field">
+              <label class="toggle-label" style="text-transform: none; letter-spacing: 0; font-size: 13px; font-weight: 600; color: var(--text-0)">
+                <input type="checkbox" id="set-batch-enabled" style="accent-color: var(--accent); width: 16px; height: 16px" />
+                <span data-i18n="settings.batchEnabledLabel">Enable batch mode</span>
+              </label>
+              <span class="field-hint" data-i18n="settings.batchEnabledHint"></span>
+            </div>
+            <div id="batch-sub-fields" style="display: none">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px">
+                <div class="field" style="margin-bottom: 0">
+                  <label data-i18n="settings.batchMinLabel">Min messages per batch</label>
+                  <input type="number" class="input-text" id="set-batch-min" value="400" min="1" max="9999" style="width: 100%" />
+                </div>
+                <div class="field" style="margin-bottom: 0">
+                  <label data-i18n="settings.batchMaxLabel">Max messages per batch</label>
+                  <input type="number" class="input-text" id="set-batch-max" value="600" min="1" max="9999" style="width: 100%" />
+                </div>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
+                <div class="field" style="margin-bottom: 0">
+                  <label data-i18n="settings.breakMinLabel">Min break between batches (min)</label>
+                  <input type="number" class="input-text" id="set-break-min" value="10" min="1" max="9999" style="width: 100%" />
+                </div>
+                <div class="field" style="margin-bottom: 0">
+                  <label data-i18n="settings.breakMaxLabel">Max break between batches (min)</label>
+                  <input type="number" class="input-text" id="set-break-max" value="120" min="1" max="9999" style="width: 100%" />
+                </div>
+              </div>
+              <span class="field-hint" style="margin-top: 12px; display: block" data-i18n="settings.batchHint"></span>
+            </div>
+          </div>
+          <!-- Deletion history section -->
+          <div class="settings-section">
+            <h3 data-i18n="settings.historySection">Deletion History</h3>
+            <p class="field-hint" style="margin-bottom: 16px" data-i18n="settings.historyHint">
+              Save a JSON file that tracks which messages have already been deleted. Load it on the next session to skip already-deleted messages
+              automatically. History is autosaved every 20 successful deletions.
+            </p>
+            <!-- History file path -->
+            <div class="field">
+              <label data-i18n="settings.historyPathLabel">History file path</label>
+              <div class="input-row">
+                <input type="text" class="input-text" id="set-history-path" placeholder="No file selected — history stored in memory only" readonly />
+                <button class="btn btn-sm" id="btn-pick-history-path" data-i18n="settings.historyPickPath">Choose…</button>
+              </div>
+              <span class="field-hint" id="history-stats" style="margin-top: 6px">0 IDs in memory</span>
+            </div>
+            <!-- Load / clear history actions -->
+            <div style="display: flex; gap: 8px; flex-wrap: wrap">
+              <button class="btn btn-sm" id="btn-load-history" data-i18n="settings.historyLoad">📂 Load history file</button>
+              <button class="btn btn-sm" id="btn-clear-history" data-i18n="settings.historyClear">🗑 Clear from memory</button>
+            </div>
+            <div class="validation-result" id="history-result"></div>
+          </div>
+          <!-- Language section -->
+          <div class="settings-section">
+            <h3 data-i18n="settings.languageSection">Language</h3>
+            <div class="field">
+              <label data-i18n="settings.languageLabel">Interface language</label>
+              <select class="input-text" id="set-lang" style="width: 200px"></select>
+            </div>
+          </div>
+          <button class="btn btn-primary" id="btn-save-settings" data-i18n="settings.saveBtn">💾 Save settings</button>
+          <div class="save-result" id="save-result"></div>
+        </div>
+      </main>
+    </div>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

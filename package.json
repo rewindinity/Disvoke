@@ -1,0 +1,66 @@
+{
+  "name": "disvoke",
+  "version": "1.0.0",
+  "description": "Disvoke - Discord message cleaner using privacy data pack",
+  "main": "src/main/index.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --linux --x64 --publish never",
+    "build:win": "electron-builder --win --x64 --publish never",
+    "build:linux": "electron-builder --linux --x64 --publish never",
+    "build:mac": "electron-builder --mac --arm64 --publish never"
+  },
+  "build": {
+    "appId": "com.disvoke.app",
+    "productName": "Disvoke",
+    "directories": {
+      "output": "build",
+      "buildResources": "resources",
+      "app": "."
+    },
+    "files": [
+      "src/**/*",
+      "resources/**/*",
+      "package.json",
+      "!**/node_modules/*/{CHANGELOG.md,README.md,readme.md,readme}",
+      "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
+      "!**/node_modules/*.d.ts",
+      "!**/node_modules/.bin",
+      "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}",
+      "!.editorconfig",
+      "!**/._*",
+      "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}"
+    ],
+    "asar": true,
+    "asarUnpack": [],
+    "compression": "store",
+    "removePackageScripts": true,
+    "electronLanguages": [
+      "en-US"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "src/resources/logo.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "src/resources/logo.png"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "src/resources/logo.png",
+      "category": "Utility"
+    }
+  },
+  "devDependencies": {
+    "electron": "^41.1.0",
+    "electron-builder": "^26.8.1"
+  }
+}
