@@ -5,8 +5,8 @@ use crate::discord::{
 use crate::history::{AUTO_SAVE_INTERVAL, DeletionHistory};
 use crate::i18n::I18n;
 use crate::pack::{FilteredMessage, GroupType, Message, PackData, filter_pack, parse_pack};
-use crate::store::{EditContentMode, Settings, Store};
-use crate::theme::{self, format_number};
+use crate::store::{AccentColor, EditContentMode, Settings, Store, ThemeMode};
+use crate::theme::{self, Palette, TriState, format_number};
 use crate::ui;
 use chrono::Local;
 use egui::{ColorImage, Context, TextureHandle, TextureOptions};
@@ -25,6 +25,14 @@ pub enum Page {
     Review,
     Progress,
     Settings,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SettingsTab {
+    Account,
+    Cleaning,
+    History,
+    Appearance,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -126,6 +134,7 @@ pub enum AppMsg {
 pub struct ProgressState {
     pub running: bool,
     pub stopping: bool,
+    pub in_batch_break: bool,
     pub finished: bool,
     pub total: usize,
     pub deleted: usize,
@@ -140,6 +149,7 @@ impl ProgressState {
         Self {
             running: false,
             stopping: false,
+            in_batch_break: false,
             finished: false,
             total: 0,
             deleted: 0,
@@ -159,6 +169,7 @@ pub struct DisvokeApp {
     pub draft_settings: Settings,
     pub i18n: I18n,
     pub page: Page,
+    pub settings_tab: SettingsTab,
 
     pub logo_texture: Option<TextureHandle>,
     pub avatar_texture: Option<TextureHandle>,
@@ -189,17 +200,22 @@ pub struct DisvokeApp {
     pub save_result: Option<(StatusMessage, Instant)>,
     pub modal: ModalState,
 
+    pub help_pack_open: bool,
+    pub help_dm_open: bool,
+    pub help_token_open: bool,
+
     pub tx: mpsc::UnboundedSender<AppMsg>,
     rx: mpsc::UnboundedReceiver<AppMsg>,
 }
 
 impl DisvokeApp {
     pub fn new(cc: &eframe::CreationContext<'_>, rt: Arc<Runtime>, logo_image: Option<ColorImage>) -> Self {
-        theme::configure_fonts(&cc.egui_ctx);
-        theme::apply_theme(&cc.egui_ctx);
-
         let store = Store::new();
         let settings = store.load();
+        let palette = Palette::from_config(settings.theme, settings.accent);
+        theme::configure_fonts(&cc.egui_ctx);
+        theme::apply_theme(&cc.egui_ctx, &palette);
+
         let i18n = I18n::new(&settings.lang);
         let ready_text = i18n.t("progress.ready").to_string();
 
@@ -223,6 +239,7 @@ impl DisvokeApp {
             settings,
             i18n,
             page: Page::Dashboard,
+            settings_tab: SettingsTab::Account,
             logo_texture,
             avatar_texture: None,
             validated_user: None,
@@ -247,9 +264,58 @@ impl DisvokeApp {
             history_result: None,
             save_result: None,
             modal: ModalState::None,
+            help_pack_open: false,
+            help_dm_open: false,
+            help_token_open: false,
             tx,
             rx,
         }
+    }
+
+    pub fn palette(&self) -> Palette {
+        Palette::from_config(self.settings.theme, self.settings.accent)
+    }
+
+    pub fn set_theme(&mut self, ctx: &Context, mode: ThemeMode) {
+        if self.settings.theme == mode {
+            return;
+        }
+        self.settings.theme = mode;
+        self.draft_settings.theme = mode;
+        theme::apply_theme(ctx, &self.palette());
+        self.store.save(&self.settings);
+    }
+
+    pub fn set_accent(&mut self, ctx: &Context, accent: AccentColor) {
+        if self.settings.accent == accent {
+            return;
+        }
+        self.settings.accent = accent;
+        self.draft_settings.accent = accent;
+        theme::apply_theme(ctx, &self.palette());
+        self.store.save(&self.settings);
+    }
+
+    pub fn set_lang(&mut self, lang: String) {
+        if self.settings.lang == lang {
+            return;
+        }
+        self.settings.lang = lang.clone();
+        self.draft_settings.lang = lang;
+        self.i18n.set_lang(&self.settings.lang);
+        if !self.progress.running && !self.progress.finished {
+            self.progress.status_text = self.i18n.t("progress.ready").to_string();
+        }
+        self.store.save(&self.settings);
+    }
+
+    pub fn open_settings_tab(&mut self, tab: SettingsTab) {
+        self.settings_tab = tab;
+        self.page = Page::Settings;
+    }
+
+    pub fn has_unsaved_settings(&self) -> bool {
+        self.draft_settings != self.settings
     }
 
     pub fn add_log(&mut self, text: impl Into<String>, level: LogLevel) {
@@ -432,6 +498,96 @@ impl DisvokeApp {
         }
     }
 
+    pub fn set_all_expanded(&mut self, expanded: bool) {
+        for grp in &mut self.review_groups {
+            grp.expanded = expanded;
+            for ch in &mut grp.channels {
+                ch.expanded = expanded;
+            }
+        }
+        self.rebuild_visible_rows();
+    }
+
+    pub fn channel_selection_state(&self, g_idx: usize, c_idx: usize) -> TriState {
+        let mut eligible = 0usize;
+        let mut selected = 0usize;
+        for &msg_idx in &self.review_groups[g_idx].channels[c_idx].message_indices {
+            let id = &self.filtered_messages[msg_idx].msg.id;
+            if !self.history.deleted_ids.contains(id) {
+                eligible += 1;
+                if self.selected_ids.contains(id) {
+                    selected += 1;
+                }
+            }
+        }
+        if eligible == 0 || selected == 0 {
+            TriState::Unchecked
+        } else if selected == eligible {
+            TriState::Checked
+        } else {
+            TriState::Indeterminate
+        }
+    }
+
+    pub fn group_selection_state(&self, g_idx: usize) -> TriState {
+        let mut eligible = 0usize;
+        let mut selected = 0usize;
+        for ch in &self.review_groups[g_idx].channels {
+            for &msg_idx in &ch.message_indices {
+                let id = &self.filtered_messages[msg_idx].msg.id;
+                if !self.history.deleted_ids.contains(id) {
+                    eligible += 1;
+                    if self.selected_ids.contains(id) {
+                        selected += 1;
+                    }
+                }
+            }
+        }
+        if eligible == 0 || selected == 0 {
+            TriState::Unchecked
+        } else if selected == eligible {
+            TriState::Checked
+        } else {
+            TriState::Indeterminate
+        }
+    }
+
+    pub fn toggle_channel_selection(&mut self, g_idx: usize, c_idx: usize) {
+        let select = self.channel_selection_state(g_idx, c_idx) != TriState::Checked;
+        let indices = self.review_groups[g_idx].channels[c_idx].message_indices.clone();
+        for msg_idx in indices {
+            let id = &self.filtered_messages[msg_idx].msg.id;
+            if !self.history.deleted_ids.contains(id) {
+                if select {
+                    self.selected_ids.insert(id.clone());
+                } else {
+                    self.selected_ids.remove(id);
+                }
+            }
+        }
+    }
+
+    pub fn toggle_group_selection(&mut self, g_idx: usize) {
+        let select = self.group_selection_state(g_idx) != TriState::Checked;
+        let channels: Vec<Vec<usize>> = self.review_groups[g_idx]
+            .channels
+            .iter()
+            .map(|c| c.message_indices.clone())
+            .collect();
+        for indices in channels {
+            for msg_idx in indices {
+                let id = &self.filtered_messages[msg_idx].msg.id;
+                if !self.history.deleted_ids.contains(id) {
+                    if select {
+                        self.selected_ids.insert(id.clone());
+                    } else {
+                        self.selected_ids.remove(id);
+                    }
+                }
+            }
+        }
+    }
+
     pub fn select_all_filtered(&mut self) {
         for item in &self.filtered_messages {
             if !self.history.deleted_ids.contains(&item.msg.id) {
@@ -514,7 +670,7 @@ impl DisvokeApp {
         });
     }
 
-    pub fn save_settings(&mut self) {
+    pub fn save_settings(&mut self, ctx: &Context) {
         self.draft_settings.token = self.draft_settings.token.trim().to_string();
         self.draft_settings.history_path = self.draft_settings.history_path.trim().to_string();
         self.draft_settings.delay = self.draft_settings.delay.clamp(1, 30);
@@ -538,10 +694,16 @@ impl DisvokeApp {
         }
 
         let lang_changed = self.draft_settings.lang != self.settings.lang;
+        let appearance_changed = self.draft_settings.theme != self.settings.theme
+            || self.draft_settings.accent != self.settings.accent;
+
         self.settings = self.draft_settings.clone();
         self.history.history_path = self.settings.history_path.clone();
         self.store.save(&self.settings);
 
+        if appearance_changed {
+            theme::apply_theme(ctx, &self.palette());
+        }
         if lang_changed {
             self.i18n.set_lang(&self.settings.lang);
             if !self.progress.running && !self.progress.finished {
@@ -682,6 +844,7 @@ impl DisvokeApp {
 
         self.progress.running = true;
         self.progress.stopping = false;
+        self.progress.in_batch_break = false;
         self.progress.finished = false;
         self.progress.total = total;
         self.progress.deleted = 0;
@@ -1011,6 +1174,7 @@ impl DisvokeApp {
                 batch_total,
                 batch_size,
             } => {
+                self.progress.in_batch_break = false;
                 let text = self.i18n.fmt(
                     "progress.logBatchStart",
                     &[
@@ -1119,6 +1283,7 @@ impl DisvokeApp {
                 batch_index,
                 batch_total,
             } => {
+                self.progress.in_batch_break = true;
                 let mins = ((break_ms as f64 / 60_000.0).round() as u64).to_string();
                 let log = self.i18n.fmt(
                     "progress.logBatchBreak",
@@ -1143,6 +1308,7 @@ impl DisvokeApp {
                 let saved = self.history.save_to_disk();
                 self.progress.running = false;
                 self.progress.stopping = false;
+                self.progress.in_batch_break = false;
                 self.progress.finished = true;
                 self.progress.deleted = deleted;
                 self.progress.errors = errors;
@@ -1171,6 +1337,7 @@ impl DisvokeApp {
                 self.history.save_to_disk();
                 self.progress.running = false;
                 self.progress.stopping = false;
+                self.progress.in_batch_break = false;
                 self.progress.finished = true;
                 self.progress.deleted = deleted;
                 self.progress.errors = errors;

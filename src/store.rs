@@ -3,7 +3,36 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum ThemeMode {
+    #[default]
+    Dark,
+    DarkOled,
+    Light,
+}
+
+impl ThemeMode {
+    pub fn next(self) -> Self {
+        match self {
+            Self::Dark => Self::DarkOled,
+            Self::DarkOled => Self::Light,
+            Self::Light => Self::Dark,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum AccentColor {
+    #[default]
+    Orange,
+    Blue,
+    Green,
+    Red,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct BatchModeSettings {
     pub enabled: bool,
@@ -33,7 +62,7 @@ pub enum EditContentMode {
     Random,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct EditBeforeDeleteSettings {
     pub enabled: bool,
@@ -53,13 +82,15 @@ impl Default for EditBeforeDeleteSettings {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct Settings {
     pub token: String,
     pub delay: u32,
     pub lang: String,
     pub history_path: String,
+    pub theme: ThemeMode,
+    pub accent: AccentColor,
     pub batch_mode: BatchModeSettings,
     pub edit_before_delete: EditBeforeDeleteSettings,
 }
@@ -71,6 +102,8 @@ impl Default for Settings {
             delay: 4,
             lang: "en".to_string(),
             history_path: String::new(),
+            theme: ThemeMode::Dark,
+            accent: AccentColor::Orange,
             batch_mode: BatchModeSettings::default(),
             edit_before_delete: EditBeforeDeleteSettings::default(),
         }
@@ -133,6 +166,8 @@ mod tests {
         assert_eq!(parsed.delay, 7);
         assert_eq!(parsed.lang, "pl");
         assert_eq!(parsed.history_path, "/tmp/h.json");
+        assert_eq!(parsed.theme, ThemeMode::Dark);
+        assert_eq!(parsed.accent, AccentColor::Orange);
         assert!(parsed.batch_mode.enabled);
         assert_eq!(parsed.batch_mode.min_batch, 300);
         assert_eq!(parsed.batch_mode.max_break_min, 90);
@@ -142,8 +177,12 @@ mod tests {
     }
 
     #[test]
-    fn edit_before_delete_settings_roundtrip() {
-        let mut settings = Settings::default();
+    fn appearance_and_edit_settings_roundtrip() {
+        let mut settings = Settings {
+            theme: ThemeMode::DarkOled,
+            accent: AccentColor::Green,
+            ..Default::default()
+        };
         settings.edit_before_delete.enabled = true;
         settings.edit_before_delete.mode = EditContentMode::Random;
         settings.edit_before_delete.custom_text = "wiped".to_string();
@@ -151,6 +190,8 @@ mod tests {
 
         let json = serde_json::to_string(&settings).unwrap();
         let decoded: Settings = serde_json::from_str(&json).unwrap();
+        assert_eq!(decoded.theme, ThemeMode::DarkOled);
+        assert_eq!(decoded.accent, AccentColor::Green);
         assert!(decoded.edit_before_delete.enabled);
         assert_eq!(decoded.edit_before_delete.mode, EditContentMode::Random);
         assert_eq!(decoded.edit_before_delete.custom_text, "wiped");

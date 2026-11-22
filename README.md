@@ -8,11 +8,11 @@ Whether you want to clean up your Direct Messages (DMs) or wipe your history fro
 
 ## Features
 
-- **Lightweight Native UI:** Rebuilt in Rust with `egui`, replacing Electron's Chromium runtime with a single native binary.
+- **Lightweight Native UI:** Rebuilt in Rust with `egui`, featuring a responsive layout, guided workflow, crisp vector icons, Dark / Dark OLED / Light themes, and customizable color accents (Orange default, Blue, Green, Red).
 - **Comprehensive Deletion:** Delete both Direct Messages (DMs) and Server (Guild) messages parsed directly from your Discord data pack.
 - **Direct DM Cleaner (No Privacy Pack Needed):** Clear any DM conversation by providing only your account token and a DM Channel ID (or recipient User ID).
 - **Edit Before Deleting:** Optionally overwrite message contents with specific custom text or fresh random alphanumeric strings before deleting each message.
-- **Smart Rate Limiting & Batch Mode:** Configurable deletion delays, automatic HTTP 429 retry handling, and optional anti-ban batch mode with randomized batch sizes and inter-batch breaks.
+- **Smart Rate Limiting & Batch Mode:** Configurable deletion delays with quick safety presets, automatic HTTP 429 retry handling, and optional anti-ban batch mode with randomized batch sizes and inter-batch breaks.
 - **Resumable Deletion History:** Track deleted message IDs in a JSON file with automatic saving every 20 deletions and skip already-deleted messages in future sessions.
 - **Multilanguage Support:** Built-in English and Polish locales, with support for loading additional locale JSON files from `locales/`.
 - **Cross-Platform:** Runs natively on Linux, Windows, and macOS.

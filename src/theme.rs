@@ -1,31 +1,194 @@
-use crate::app::Page;
+use crate::icons::{self, Icon};
+use crate::store::{AccentColor, ThemeMode};
 use egui::{
-    Align2, Color32, Context, CornerRadius, FontData, FontDefinitions, FontFamily, FontId, Frame,
-    Margin, Pos2, Rect, Response, Sense, Stroke, StrokeKind, TextFormat, TextStyle, Ui, Vec2,
-    Visuals, pos2, text::LayoutJob, vec2,
+    Align2, Color32, Context, CornerRadius, CursorIcon, FontData, FontDefinitions, FontFamily,
+    FontId, Frame, Margin, Rect, Response, Sense, Stroke, StrokeKind, TextFormat, TextStyle, Ui,
+    Vec2, Visuals, pos2, text::LayoutJob, vec2,
 };
 use std::sync::Arc;
 
-pub const BG_0: Color32 = Color32::from_rgb(0x0d, 0x0e, 0x11);
-pub const BG_1: Color32 = Color32::from_rgb(0x13, 0x15, 0x1a);
-pub const BG_2: Color32 = Color32::from_rgb(0x1a, 0x1d, 0x24);
-pub const BG_3: Color32 = Color32::from_rgb(0x22, 0x26, 0x2f);
-pub const BG_HOVER: Color32 = Color32::from_rgb(0x2a, 0x2f, 0x3a);
-pub const BORDER: Color32 = Color32::from_rgb(0x2e, 0x33, 0x40);
-pub const ACCENT: Color32 = Color32::from_rgb(0x58, 0x65, 0xf2);
-pub const ACCENT_HOVER: Color32 = Color32::from_rgb(0x47, 0x52, 0xc4);
-pub const ACCENT_DIM: Color32 = Color32::from_rgba_premultiplied(13, 15, 36, 38);
-pub const DANGER: Color32 = Color32::from_rgb(0xed, 0x42, 0x45);
-pub const DANGER_HOVER: Color32 = Color32::from_rgb(0xc0, 0x35, 0x37);
-pub const SUCCESS: Color32 = Color32::from_rgb(0x57, 0xf2, 0x87);
-pub const SUCCESS_DIM: Color32 = Color32::from_rgba_premultiplied(4, 12, 7, 13);
-pub const WARN: Color32 = Color32::from_rgb(0xfe, 0xe7, 0x5c);
-pub const TEXT_0: Color32 = Color32::from_rgb(0xf2, 0xf3, 0xf5);
-pub const TEXT_1: Color32 = Color32::from_rgb(0xb5, 0xba, 0xc1);
-pub const TEXT_2: Color32 = Color32::from_rgb(0x6d, 0x72, 0x80);
-
 pub const RADIUS: u8 = 8;
 pub const RADIUS_LG: u8 = 12;
+
+#[derive(Debug, Clone, Copy)]
+pub struct Palette {
+    pub is_dark: bool,
+    pub bg_0: Color32,
+    pub bg_1: Color32,
+    pub bg_2: Color32,
+    pub bg_3: Color32,
+    pub bg_hover: Color32,
+    pub border: Color32,
+    pub border_subtle: Color32,
+    pub accent: Color32,
+    pub accent_hover: Color32,
+    pub accent_text: Color32,
+    pub accent_dim: Color32,
+    pub accent_border: Color32,
+    pub danger: Color32,
+    pub danger_hover: Color32,
+    pub danger_dim: Color32,
+    pub success: Color32,
+    pub success_dim: Color32,
+    pub warn: Color32,
+    pub warn_dim: Color32,
+    pub text_0: Color32,
+    pub text_1: Color32,
+    pub text_2: Color32,
+}
+
+impl Palette {
+    pub fn from_config(mode: ThemeMode, accent: AccentColor) -> Self {
+        let (ac, ac_hover, ac_text, ac_dim, ac_border) = accent_colors(mode, accent);
+        match mode {
+            ThemeMode::Dark => Self {
+                is_dark: true,
+                bg_0: Color32::from_rgb(0x0f, 0x11, 0x15),
+                bg_1: Color32::from_rgb(0x15, 0x18, 0x1e),
+                bg_2: Color32::from_rgb(0x1c, 0x20, 0x28),
+                bg_3: Color32::from_rgb(0x25, 0x2a, 0x35),
+                bg_hover: Color32::from_rgb(0x2e, 0x34, 0x42),
+                border: Color32::from_rgb(0x2c, 0x32, 0x40),
+                border_subtle: Color32::from_rgb(0x23, 0x28, 0x34),
+                accent: ac,
+                accent_hover: ac_hover,
+                accent_text: ac_text,
+                accent_dim: ac_dim,
+                accent_border: ac_border,
+                danger: Color32::from_rgb(0xef, 0x44, 0x44),
+                danger_hover: Color32::from_rgb(0xdc, 0x26, 0x26),
+                danger_dim: Color32::from_rgba_unmultiplied(239, 68, 68, 28),
+                success: Color32::from_rgb(0x22, 0xc5, 0x5e),
+                success_dim: Color32::from_rgba_unmultiplied(34, 197, 94, 24),
+                warn: Color32::from_rgb(0xf5, 0x9e, 0x0b),
+                warn_dim: Color32::from_rgba_unmultiplied(245, 158, 11, 26),
+                text_0: Color32::from_rgb(0xf3, 0xf4, 0xf6),
+                text_1: Color32::from_rgb(0xb8, 0xbe, 0xc9),
+                text_2: Color32::from_rgb(0x7c, 0x84, 0x94),
+            },
+            ThemeMode::DarkOled => Self {
+                is_dark: true,
+                bg_0: Color32::from_rgb(0x00, 0x00, 0x00),
+                bg_1: Color32::from_rgb(0x05, 0x05, 0x07),
+                bg_2: Color32::from_rgb(0x0b, 0x0c, 0x10),
+                bg_3: Color32::from_rgb(0x13, 0x15, 0x1c),
+                bg_hover: Color32::from_rgb(0x1c, 0x1f, 0x29),
+                border: Color32::from_rgb(0x1e, 0x22, 0x2d),
+                border_subtle: Color32::from_rgb(0x14, 0x16, 0x1e),
+                accent: ac,
+                accent_hover: ac_hover,
+                accent_text: ac_text,
+                accent_dim: ac_dim,
+                accent_border: ac_border,
+                danger: Color32::from_rgb(0xf8, 0x45, 0x45),
+                danger_hover: Color32::from_rgb(0xdc, 0x26, 0x26),
+                danger_dim: Color32::from_rgba_unmultiplied(239, 68, 68, 26),
+                success: Color32::from_rgb(0x22, 0xc5, 0x5e),
+                success_dim: Color32::from_rgba_unmultiplied(34, 197, 94, 22),
+                warn: Color32::from_rgb(0xf5, 0x9e, 0x0b),
+                warn_dim: Color32::from_rgba_unmultiplied(245, 158, 11, 24),
+                text_0: Color32::from_rgb(0xf5, 0xf6, 0xf8),
+                text_1: Color32::from_rgb(0xab, 0xb2, 0xbf),
+                text_2: Color32::from_rgb(0x6c, 0x73, 0x82),
+            },
+            ThemeMode::Light => Self {
+                is_dark: false,
+                bg_0: Color32::from_rgb(0xf4, 0xf6, 0xf9),
+                bg_1: Color32::from_rgb(0xea, 0xed, 0xf2),
+                bg_2: Color32::from_rgb(0xff, 0xff, 0xff),
+                bg_3: Color32::from_rgb(0xee, 0xf1, 0xf6),
+                bg_hover: Color32::from_rgb(0xe2, 0xe6, 0xee),
+                border: Color32::from_rgb(0xd4, 0xd9, 0xe3),
+                border_subtle: Color32::from_rgb(0xe4, 0xe7, 0xef),
+                accent: ac,
+                accent_hover: ac_hover,
+                accent_text: ac_text,
+                accent_dim: ac_dim,
+                accent_border: ac_border,
+                danger: Color32::from_rgb(0xdc, 0x26, 0x26),
+                danger_hover: Color32::from_rgb(0xb9, 0x1c, 0x1c),
+                danger_dim: Color32::from_rgba_unmultiplied(220, 38, 38, 22),
+                success: Color32::from_rgb(0x15, 0x80, 0x3d),
+                success_dim: Color32::from_rgba_unmultiplied(21, 128, 61, 20),
+                warn: Color32::from_rgb(0xb4, 0x53, 0x09),
+                warn_dim: Color32::from_rgba_unmultiplied(180, 83, 9, 22),
+                text_0: Color32::from_rgb(0x11, 0x18, 0x27),
+                text_1: Color32::from_rgb(0x4b, 0x55, 0x63),
+                text_2: Color32::from_rgb(0x6b, 0x72, 0x80),
+            },
+        }
+    }
+}
+
+pub fn accent_swatch(accent: AccentColor) -> Color32 {
+    match accent {
+        AccentColor::Orange => Color32::from_rgb(0xf9, 0x73, 0x16),
+        AccentColor::Blue => Color32::from_rgb(0x3b, 0x82, 0xf6),
+        AccentColor::Green => Color32::from_rgb(0x22, 0xc5, 0x5e),
+        AccentColor::Red => Color32::from_rgb(0xef, 0x44, 0x44),
+    }
+}
+
+fn accent_colors(mode: ThemeMode, accent: AccentColor) -> (Color32, Color32, Color32, Color32, Color32) {
+    match (mode, accent) {
+        (ThemeMode::Dark | ThemeMode::DarkOled, AccentColor::Orange) => (
+            Color32::from_rgb(0xf9, 0x73, 0x16),
+            Color32::from_rgb(0xea, 0x58, 0x0c),
+            Color32::from_rgb(0xfb, 0x92, 0x3c),
+            Color32::from_rgba_unmultiplied(249, 115, 22, 34),
+            Color32::from_rgba_unmultiplied(249, 115, 22, 115),
+        ),
+        (ThemeMode::Light, AccentColor::Orange) => (
+            Color32::from_rgb(0xea, 0x58, 0x0c),
+            Color32::from_rgb(0xc2, 0x41, 0x0c),
+            Color32::from_rgb(0xc2, 0x41, 0x0c),
+            Color32::from_rgba_unmultiplied(234, 88, 12, 26),
+            Color32::from_rgba_unmultiplied(234, 88, 12, 105),
+        ),
+        (ThemeMode::Dark | ThemeMode::DarkOled, AccentColor::Blue) => (
+            Color32::from_rgb(0x3b, 0x82, 0xf6),
+            Color32::from_rgb(0x25, 0x63, 0xeb),
+            Color32::from_rgb(0x60, 0xa5, 0xfa),
+            Color32::from_rgba_unmultiplied(59, 130, 246, 34),
+            Color32::from_rgba_unmultiplied(59, 130, 246, 115),
+        ),
+        (ThemeMode::Light, AccentColor::Blue) => (
+            Color32::from_rgb(0x25, 0x63, 0xeb),
+            Color32::from_rgb(0x1d, 0x4e, 0xd8),
+            Color32::from_rgb(0x1d, 0x4e, 0xd8),
+            Color32::from_rgba_unmultiplied(37, 99, 235, 26),
+            Color32::from_rgba_unmultiplied(37, 99, 235, 105),
+        ),
+        (ThemeMode::Dark | ThemeMode::DarkOled, AccentColor::Green) => (
+            Color32::from_rgb(0x22, 0xc5, 0x5e),
+            Color32::from_rgb(0x16, 0xa3, 0x4a),
+            Color32::from_rgb(0x4a, 0xde, 0x80),
+            Color32::from_rgba_unmultiplied(34, 197, 94, 34),
+            Color32::from_rgba_unmultiplied(34, 197, 94, 115),
+        ),
+        (ThemeMode::Light, AccentColor::Green) => (
+            Color32::from_rgb(0x16, 0xa3, 0x4a),
+            Color32::from_rgb(0x15, 0x80, 0x3d),
+            Color32::from_rgb(0x15, 0x80, 0x3d),
+            Color32::from_rgba_unmultiplied(22, 163, 74, 26),
+            Color32::from_rgba_unmultiplied(22, 163, 74, 105),
+        ),
+        (ThemeMode::Dark | ThemeMode::DarkOled, AccentColor::Red) => (
+            Color32::from_rgb(0xef, 0x44, 0x44),
+            Color32::from_rgb(0xdc, 0x26, 0x26),
+            Color32::from_rgb(0xf8, 0x71, 0x71),
+            Color32::from_rgba_unmultiplied(239, 68, 68, 34),
+            Color32::from_rgba_unmultiplied(239, 68, 68, 115),
+        ),
+        (ThemeMode::Light, AccentColor::Red) => (
+            Color32::from_rgb(0xdc, 0x26, 0x26),
+            Color32::from_rgb(0xb9, 0x1c, 0x1c),
+            Color32::from_rgb(0xb9, 0x1c, 0x1c),
+            Color32::from_rgba_unmultiplied(220, 38, 38, 26),
+            Color32::from_rgba_unmultiplied(220, 38, 38, 105),
+        ),
+    }
+}
 
 pub fn configure_fonts(ctx: &Context) {
     let mut fonts = FontDefinitions::default();
@@ -61,52 +224,57 @@ pub fn configure_fonts(ctx: &Context) {
     ctx.set_fonts(fonts);
 }
 
-pub fn apply_theme(ctx: &Context) {
-    let mut visuals = Visuals::dark();
-    visuals.panel_fill = BG_0;
-    visuals.window_fill = BG_2;
-    visuals.faint_bg_color = BG_1;
-    visuals.extreme_bg_color = BG_3;
-    visuals.code_bg_color = BG_2;
-    visuals.override_text_color = Some(TEXT_0);
-    visuals.hyperlink_color = ACCENT;
-    visuals.warn_fg_color = WARN;
-    visuals.error_fg_color = DANGER;
+pub fn apply_theme(ctx: &Context, p: &Palette) {
+    let mut visuals = if p.is_dark {
+        Visuals::dark()
+    } else {
+        Visuals::light()
+    };
+
+    visuals.panel_fill = p.bg_0;
+    visuals.window_fill = p.bg_2;
+    visuals.faint_bg_color = p.bg_1;
+    visuals.extreme_bg_color = p.bg_3;
+    visuals.code_bg_color = p.bg_3;
+    visuals.override_text_color = Some(p.text_0);
+    visuals.hyperlink_color = p.accent_text;
+    visuals.warn_fg_color = p.warn;
+    visuals.error_fg_color = p.danger;
     visuals.window_corner_radius = CornerRadius::same(RADIUS_LG);
-    visuals.window_stroke = Stroke::new(1.0_f32, BORDER);
+    visuals.window_stroke = Stroke::new(1.0_f32, p.border);
     visuals.menu_corner_radius = CornerRadius::same(RADIUS);
 
-    visuals.selection.bg_fill = Color32::from_rgba_unmultiplied(88, 101, 242, 90);
-    visuals.selection.stroke = Stroke::new(1.0_f32, ACCENT);
+    visuals.selection.bg_fill = p.accent;
+    visuals.selection.stroke = Stroke::new(1.0_f32, Color32::WHITE);
 
-    visuals.widgets.noninteractive.bg_fill = BG_2;
-    visuals.widgets.noninteractive.weak_bg_fill = BG_2;
-    visuals.widgets.noninteractive.bg_stroke = Stroke::new(1.0_f32, BORDER);
-    visuals.widgets.noninteractive.fg_stroke = Stroke::new(1.0_f32, TEXT_1);
+    visuals.widgets.noninteractive.bg_fill = p.bg_2;
+    visuals.widgets.noninteractive.weak_bg_fill = p.bg_2;
+    visuals.widgets.noninteractive.bg_stroke = Stroke::new(1.0_f32, p.border);
+    visuals.widgets.noninteractive.fg_stroke = Stroke::new(1.0_f32, p.text_1);
     visuals.widgets.noninteractive.corner_radius = CornerRadius::same(RADIUS);
 
-    visuals.widgets.inactive.bg_fill = BG_3;
-    visuals.widgets.inactive.weak_bg_fill = BG_3;
-    visuals.widgets.inactive.bg_stroke = Stroke::new(1.0_f32, BORDER);
-    visuals.widgets.inactive.fg_stroke = Stroke::new(1.0_f32, TEXT_0);
+    visuals.widgets.inactive.bg_fill = p.bg_3;
+    visuals.widgets.inactive.weak_bg_fill = p.bg_3;
+    visuals.widgets.inactive.bg_stroke = Stroke::new(1.0_f32, p.border);
+    visuals.widgets.inactive.fg_stroke = Stroke::new(1.0_f32, p.text_0);
     visuals.widgets.inactive.corner_radius = CornerRadius::same(RADIUS);
 
-    visuals.widgets.hovered.bg_fill = BG_HOVER;
-    visuals.widgets.hovered.weak_bg_fill = BG_HOVER;
-    visuals.widgets.hovered.bg_stroke = Stroke::new(1.0_f32, ACCENT);
-    visuals.widgets.hovered.fg_stroke = Stroke::new(1.0_f32, TEXT_0);
+    visuals.widgets.hovered.bg_fill = p.bg_hover;
+    visuals.widgets.hovered.weak_bg_fill = p.bg_hover;
+    visuals.widgets.hovered.bg_stroke = Stroke::new(1.0_f32, p.accent);
+    visuals.widgets.hovered.fg_stroke = Stroke::new(1.0_f32, p.text_0);
     visuals.widgets.hovered.corner_radius = CornerRadius::same(RADIUS);
 
-    visuals.widgets.active.bg_fill = ACCENT;
-    visuals.widgets.active.weak_bg_fill = ACCENT;
-    visuals.widgets.active.bg_stroke = Stroke::new(1.0_f32, ACCENT);
+    visuals.widgets.active.bg_fill = p.accent;
+    visuals.widgets.active.weak_bg_fill = p.accent;
+    visuals.widgets.active.bg_stroke = Stroke::new(1.0_f32, p.accent);
     visuals.widgets.active.fg_stroke = Stroke::new(1.5_f32, Color32::WHITE);
     visuals.widgets.active.corner_radius = CornerRadius::same(RADIUS);
 
-    visuals.widgets.open.bg_fill = BG_3;
-    visuals.widgets.open.weak_bg_fill = BG_3;
-    visuals.widgets.open.bg_stroke = Stroke::new(1.0_f32, ACCENT);
-    visuals.widgets.open.fg_stroke = Stroke::new(1.0_f32, TEXT_0);
+    visuals.widgets.open.bg_fill = p.bg_3;
+    visuals.widgets.open.weak_bg_fill = p.bg_3;
+    visuals.widgets.open.bg_stroke = Stroke::new(1.0_f32, p.accent);
+    visuals.widgets.open.fg_stroke = Stroke::new(1.0_f32, p.text_0);
     visuals.widgets.open.corner_radius = CornerRadius::same(RADIUS);
 
     let mut style = (*ctx.style()).clone();
@@ -140,53 +308,180 @@ pub fn apply_theme(ctx: &Context) {
     ctx.set_style(style);
 }
 
-pub fn card_frame() -> Frame {
+pub fn card_frame(p: &Palette) -> Frame {
     Frame::new()
-        .fill(BG_2)
-        .stroke(Stroke::new(1.0_f32, BORDER))
+        .fill(p.bg_2)
+        .stroke(Stroke::new(1.0_f32, p.border))
         .corner_radius(CornerRadius::same(RADIUS_LG))
-        .inner_margin(Margin::symmetric(24, 20))
+        .inner_margin(Margin::symmetric(22, 18))
 }
 
-pub fn panel_box_frame() -> Frame {
+pub fn inset_frame(p: &Palette) -> Frame {
     Frame::new()
-        .fill(BG_1)
-        .stroke(Stroke::new(1.0_f32, BORDER))
+        .fill(p.bg_1)
+        .stroke(Stroke::new(1.0_f32, p.border))
         .corner_radius(CornerRadius::same(RADIUS_LG))
         .inner_margin(Margin::same(10))
 }
 
-pub fn page_title(ui: &mut Ui, text: &str) {
-    ui.label(
-        egui::RichText::new(text)
-            .size(22.0)
-            .strong()
-            .color(TEXT_0),
-    );
+pub fn centered_column(ui: &mut Ui, max_width: f32, add_contents: impl FnOnce(&mut Ui)) {
+    let avail = ui.available_width();
+    let target = avail.min(max_width);
+    let pad = ((avail - target) * 0.5).max(0.0);
+    let prev_x = ui.spacing().item_spacing.x;
+    ui.horizontal(|ui| {
+        ui.spacing_mut().item_spacing.x = 0.0;
+        if pad > 0.0 {
+            ui.add_space(pad);
+        }
+        ui.vertical(|ui| {
+            ui.spacing_mut().item_spacing.x = prev_x;
+            ui.set_width(target);
+            add_contents(ui);
+        });
+    });
 }
 
-pub fn section_title(ui: &mut Ui, text: &str) {
-    ui.label(
-        egui::RichText::new(text)
-            .size(14.0)
-            .strong()
-            .color(TEXT_0),
-    );
-    ui.add_space(8.0);
+pub fn page_header(ui: &mut Ui, p: &Palette, icon: Icon, title: &str, subtitle: Option<&str>) {
+    ui.horizontal(|ui| {
+        ui.spacing_mut().item_spacing.x = 12.0;
+        let (icon_box, _) = ui.allocate_exact_size(vec2(38.0, 38.0), Sense::hover());
+        let painter = ui.painter();
+        painter.rect_filled(icon_box, CornerRadius::same(10), p.accent_dim);
+        painter.rect_stroke(
+            icon_box,
+            CornerRadius::same(10),
+            Stroke::new(1.0_f32, p.accent_border),
+            StrokeKind::Inside,
+        );
+        icons::paint(painter, icon_box.shrink(9.0), icon, p.accent_text);
+
+        ui.vertical(|ui| {
+            ui.spacing_mut().item_spacing.y = 2.0;
+            ui.label(egui::RichText::new(title).size(21.0).strong().color(p.text_0));
+            if let Some(sub) = subtitle
+                && !sub.is_empty()
+            {
+                ui.label(egui::RichText::new(sub).size(13.0).color(p.text_1));
+            }
+        });
+    });
 }
 
-pub fn field_label(ui: &mut Ui, text: &str) {
+pub fn section_header(ui: &mut Ui, p: &Palette, icon: Icon, title: &str) {
+    ui.horizontal(|ui| {
+        ui.spacing_mut().item_spacing.x = 8.0;
+        let (rect, _) = ui.allocate_exact_size(vec2(17.0, 17.0), Sense::hover());
+        icons::paint(ui.painter(), rect, icon, p.accent_text);
+        ui.label(egui::RichText::new(title).size(14.5).strong().color(p.text_0));
+    });
+    ui.add_space(10.0);
+}
+
+pub fn field_label(ui: &mut Ui, p: &Palette, text: &str) {
     ui.label(
         egui::RichText::new(text.to_uppercase())
             .size(11.0)
             .strong()
-            .color(TEXT_1),
+            .color(p.text_1),
     );
 }
 
-pub fn field_hint(ui: &mut Ui, text: &str) {
+pub fn field_hint(ui: &mut Ui, p: &Palette, text: &str) {
     if !text.is_empty() {
-        ui.label(egui::RichText::new(text).size(11.5).color(TEXT_2));
+        ui.label(egui::RichText::new(text).size(11.5).color(p.text_2));
+    }
+}
+
+pub fn pill_badge(ui: &mut Ui, text: &str, bg: Color32, fg: Color32, border: Option<Color32>) {
+    let galley = ui
+        .painter()
+        .layout_no_wrap(text.to_string(), FontId::proportional(11.5), fg);
+    let desired = galley.size() + vec2(20.0, 8.0);
+    let (rect, _) = ui.allocate_exact_size(desired, Sense::hover());
+    if ui.is_rect_visible(rect) {
+        let radius = CornerRadius::same((rect.height() * 0.5).round() as u8);
+        let painter = ui.painter();
+        painter.rect_filled(rect, radius, bg);
+        if let Some(b) = border {
+            painter.rect_stroke(rect, radius, Stroke::new(1.0_f32, b), StrokeKind::Inside);
+        }
+        painter.galley(
+            pos2(
+                rect.center().x - galley.size().x * 0.5,
+                rect.center().y - galley.size().y * 0.5,
+            ),
+            galley,
+            fg,
+        );
+    }
+}
+
+pub fn help_drawer(
+    ui: &mut Ui,
+    p: &Palette,
+    id: &str,
+    title: &str,
+    open: &mut bool,
+    steps: &[&str],
+) {
+    let header_w = ui.available_width();
+    let (rect, resp) = ui.allocate_exact_size(vec2(header_w, 36.0), Sense::click());
+    if ui.is_rect_visible(rect) {
+        let fill = if resp.hovered() { p.bg_hover } else { p.bg_3 };
+        let painter = ui.painter();
+        painter.rect_filled(rect, CornerRadius::same(RADIUS), fill);
+        painter.rect_stroke(
+            rect,
+            CornerRadius::same(RADIUS),
+            Stroke::new(1.0_f32, p.border),
+            StrokeKind::Inside,
+        );
+        let icon_rect = Rect::from_min_size(pos2(rect.left() + 10.0, rect.center().y - 8.0), vec2(16.0, 16.0));
+        icons::paint(painter, icon_rect, Icon::HelpCircle, p.accent_text);
+        painter.text(
+            pos2(rect.left() + 34.0, rect.center().y),
+            Align2::LEFT_CENTER,
+            title,
+            FontId::proportional(12.5),
+            p.text_0,
+        );
+        let chev_rect = Rect::from_min_size(pos2(rect.right() - 24.0, rect.center().y - 7.0), vec2(14.0, 14.0));
+        icons::paint(
+            painter,
+            chev_rect,
+            if *open { Icon::ChevronDown } else { Icon::ChevronRight },
+            p.text_2,
+        );
+    }
+    if resp.on_hover_cursor(CursorIcon::PointingHand).clicked() {
+        *open = !*open;
+    }
+
+    if *open {
+        ui.add_space(6.0);
+        Frame::new()
+            .fill(p.bg_1)
+            .stroke(Stroke::new(1.0_f32, p.border_subtle))
+            .corner_radius(CornerRadius::same(RADIUS))
+            .inner_margin(Margin::symmetric(14, 12))
+            .show(ui, |ui| {
+                ui.set_width(ui.available_width());
+                ui.push_id(id, |ui| {
+                    ui.spacing_mut().item_spacing.y = 6.0;
+                    for (idx, step) in steps.iter().enumerate() {
+                        ui.horizontal_wrapped(|ui| {
+                            ui.label(
+                                egui::RichText::new(format!("{}.", idx + 1))
+                                    .size(12.5)
+                                    .strong()
+                                    .color(p.accent_text),
+                            );
+                            ui.label(egui::RichText::new(*step).size(12.5).color(p.text_1));
+                        });
+                    }
+                });
+            });
     }
 }
 
@@ -197,20 +492,28 @@ struct ButtonStyle {
     stroke: Stroke,
     padding: Vec2,
     font_size: f32,
+    icon_size: f32,
 }
 
-fn styled_button(ui: &mut Ui, label: &str, style: ButtonStyle, enabled: bool) -> Response {
+fn styled_button(
+    ui: &mut Ui,
+    label: &str,
+    icon: Option<Icon>,
+    style: ButtonStyle,
+    enabled: bool,
+) -> Response {
     let galley = ui.painter().layout_no_wrap(
         label.to_string(),
         FontId::proportional(style.font_size),
         style.text_color,
     );
-    let desired = galley.size() + style.padding * 2.0;
-    let sense = if enabled {
-        Sense::click()
-    } else {
-        Sense::hover()
-    };
+    let icon_gap = if icon.is_some() && !label.is_empty() { 7.0 } else { 0.0 };
+    let icon_w = if icon.is_some() { style.icon_size } else { 0.0 };
+    let content_w = icon_w + icon_gap + galley.size().x;
+    let content_h = galley.size().y.max(style.icon_size);
+    let desired = vec2(content_w, content_h) + style.padding * 2.0;
+
+    let sense = if enabled { Sense::click() } else { Sense::hover() };
     let (rect, resp) = ui.allocate_exact_size(desired, sense);
 
     if ui.is_rect_visible(rect) {
@@ -236,102 +539,141 @@ fn styled_button(ui: &mut Ui, label: &str, style: ButtonStyle, enabled: bool) ->
             };
             painter.rect_stroke(rect, CornerRadius::same(RADIUS), st, StrokeKind::Inside);
         }
-        painter.text(
-            rect.center(),
-            Align2::CENTER_CENTER,
-            label,
-            FontId::proportional(style.font_size),
-            fg,
-        );
+
+        let start_x = rect.center().x - content_w * 0.5;
+        let mut text_x = start_x;
+        if let Some(ic) = icon {
+            let ic_rect = Rect::from_min_size(
+                pos2(start_x, rect.center().y - style.icon_size * 0.5),
+                vec2(style.icon_size, style.icon_size),
+            );
+            icons::paint(painter, ic_rect, ic, fg);
+            text_x += style.icon_size + icon_gap;
+        }
+        if !label.is_empty() {
+            painter.text(
+                pos2(text_x, rect.center().y),
+                Align2::LEFT_CENTER,
+                label,
+                FontId::proportional(style.font_size),
+                fg,
+            );
+        }
     }
 
     if enabled {
-        resp.on_hover_cursor(egui::CursorIcon::PointingHand)
+        resp.on_hover_cursor(CursorIcon::PointingHand)
     } else {
         resp
     }
 }
 
-pub fn primary_button(ui: &mut Ui, label: &str, enabled: bool) -> Response {
+pub fn primary_button(ui: &mut Ui, p: &Palette, icon: Option<Icon>, label: &str, enabled: bool) -> Response {
     styled_button(
         ui,
         label,
+        icon,
         ButtonStyle {
-            bg: ACCENT,
-            bg_hover: ACCENT_HOVER,
+            bg: p.accent,
+            bg_hover: p.accent_hover,
             text_color: Color32::WHITE,
             stroke: Stroke::NONE,
-            padding: vec2(18.0, 9.0),
+            padding: vec2(16.0, 9.0),
             font_size: 13.0,
+            icon_size: 15.0,
         },
         enabled,
     )
 }
 
-pub fn danger_button(ui: &mut Ui, label: &str, enabled: bool) -> Response {
+pub fn danger_button(ui: &mut Ui, p: &Palette, icon: Option<Icon>, label: &str, enabled: bool) -> Response {
     styled_button(
         ui,
         label,
+        icon,
         ButtonStyle {
-            bg: DANGER,
-            bg_hover: DANGER_HOVER,
+            bg: p.danger,
+            bg_hover: p.danger_hover,
             text_color: Color32::WHITE,
             stroke: Stroke::NONE,
-            padding: vec2(18.0, 9.0),
+            padding: vec2(16.0, 9.0),
             font_size: 13.0,
+            icon_size: 15.0,
         },
         enabled,
     )
 }
 
-pub fn outline_button(ui: &mut Ui, label: &str, enabled: bool) -> Response {
+pub fn outline_button(ui: &mut Ui, p: &Palette, icon: Option<Icon>, label: &str, enabled: bool) -> Response {
     styled_button(
         ui,
         label,
+        icon,
         ButtonStyle {
-            bg: Color32::TRANSPARENT,
-            bg_hover: BG_2,
-            text_color: TEXT_0,
-            stroke: Stroke::new(1.0_f32, BORDER),
-            padding: vec2(18.0, 9.0),
+            bg: p.bg_2,
+            bg_hover: p.bg_hover,
+            text_color: p.text_0,
+            stroke: Stroke::new(1.0_f32, p.border),
+            padding: vec2(15.0, 9.0),
             font_size: 13.0,
+            icon_size: 15.0,
         },
         enabled,
     )
 }
 
-pub fn small_button(ui: &mut Ui, label: &str, enabled: bool) -> Response {
+pub fn small_button(ui: &mut Ui, p: &Palette, icon: Option<Icon>, label: &str, enabled: bool) -> Response {
     styled_button(
         ui,
         label,
+        icon,
         ButtonStyle {
-            bg: BG_3,
-            bg_hover: BG_HOVER,
-            text_color: TEXT_0,
-            stroke: Stroke::new(1.0_f32, BORDER),
-            padding: vec2(12.0, 6.0),
+            bg: p.bg_3,
+            bg_hover: p.bg_hover,
+            text_color: p.text_0,
+            stroke: Stroke::new(1.0_f32, p.border),
+            padding: vec2(11.0, 6.0),
             font_size: 12.0,
+            icon_size: 14.0,
         },
         enabled,
     )
 }
 
-pub fn render_inline_rich_text(ui: &mut Ui, text: &str) {
+pub fn chip_button(ui: &mut Ui, p: &Palette, icon: Icon, label: &str, active: bool) -> Response {
+    styled_button(
+        ui,
+        label,
+        Some(icon),
+        ButtonStyle {
+            bg: if active { p.accent_dim } else { p.bg_3 },
+            bg_hover: if active { p.accent_dim } else { p.bg_hover },
+            text_color: if active { p.accent_text } else { p.text_1 },
+            stroke: Stroke::new(1.0_f32, if active { p.accent_border } else { p.border }),
+            padding: vec2(10.0, 5.0),
+            font_size: 11.5,
+            icon_size: 13.0,
+        },
+        true,
+    )
+}
+
+pub fn render_inline_rich_text(ui: &mut Ui, p: &Palette, text: &str) {
     let mut job = LayoutJob::default();
     let normal = TextFormat {
         font_id: FontId::proportional(13.5),
-        color: TEXT_1,
+        color: p.text_1,
         ..Default::default()
     };
     let bold = TextFormat {
         font_id: FontId::proportional(13.5),
-        color: TEXT_0,
+        color: p.text_0,
         ..Default::default()
     };
     let code = TextFormat {
         font_id: FontId::monospace(12.0),
-        color: TEXT_0,
-        background: BG_2,
+        color: p.accent_text,
+        background: p.bg_3,
         ..Default::default()
     };
 
@@ -402,103 +744,60 @@ pub fn format_number(n: usize) -> String {
     out
 }
 
-pub fn paint_nav_icon(painter: &egui::Painter, rect: Rect, page: Page, color: Color32) {
-    let stroke = Stroke::new(1.75_f32, color);
-    let s = rect.width().min(rect.height()) / 24.0;
-    let p = |x: f32, y: f32| pos2(rect.left() + x * s, rect.top() + y * s);
-    let r = |x: f32, y: f32, w: f32, h: f32| Rect::from_min_size(p(x, y), vec2(w * s, h * s));
-
-    match page {
-        Page::Dashboard => {
-            for (x, y) in [(3.0, 3.0), (14.0, 3.0), (3.0, 14.0), (14.0, 14.0)] {
-                painter.rect_stroke(r(x, y, 7.0, 7.0), CornerRadius::same(1), stroke, StrokeKind::Middle);
-            }
-        }
-        Page::Pack => {
-            let pts = vec![
-                p(2.5, 5.0),
-                p(9.0, 5.0),
-                p(11.0, 8.0),
-                p(21.5, 8.0),
-                p(21.5, 19.5),
-                p(2.5, 19.5),
-            ];
-            painter.add(egui::Shape::closed_line(pts, stroke));
-        }
-        Page::DirectDm => {
-            let pts = vec![
-                p(3.5, 4.5),
-                p(20.5, 4.5),
-                p(20.5, 16.5),
-                p(9.5, 16.5),
-                p(4.5, 20.5),
-                p(5.5, 16.5),
-                p(3.5, 16.5),
-            ];
-            painter.add(egui::Shape::closed_line(pts, stroke));
-        }
-        Page::Review => {
-            let box_pts = vec![p(20.0, 13.0), p(20.0, 20.0), p(4.0, 20.0), p(4.0, 4.0), p(15.0, 4.0)];
-            painter.add(egui::Shape::line(box_pts, stroke));
-            let check = vec![p(9.0, 11.5), p(12.0, 14.5), p(21.5, 5.0)];
-            painter.add(egui::Shape::line(check, stroke));
-        }
-        Page::Progress => {
-            let pts = vec![
-                p(2.0, 12.0),
-                p(6.0, 12.0),
-                p(9.0, 4.0),
-                p(15.0, 20.0),
-                p(18.0, 12.0),
-                p(22.0, 12.0),
-            ];
-            painter.add(egui::Shape::line(pts, stroke));
-        }
-        Page::Settings => {
-            let center = p(12.0, 12.0);
-            painter.circle_stroke(center, 3.2 * s, stroke);
-            painter.circle_stroke(center, 7.2 * s, stroke);
-            for i in 0..8 {
-                let angle = (i as f32) * std::f32::consts::FRAC_PI_4;
-                let (sin, cos) = angle.sin_cos();
-                let a = pos2(center.x + cos * 7.2 * s, center.y + sin * 7.2 * s);
-                let b = pos2(center.x + cos * 9.8 * s, center.y + sin * 9.8 * s);
-                painter.line_segment([a, b], Stroke::new(2.0_f32, color));
-            }
-        }
-    }
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TriState {
+    Unchecked,
+    Indeterminate,
+    Checked,
 }
 
-pub fn paint_folder_large(painter: &egui::Painter, rect: Rect, color: Color32) {
-    let stroke = Stroke::new(2.0_f32, color);
-    let s = rect.width().min(rect.height()) / 24.0;
-    let p = |x: f32, y: f32| pos2(rect.left() + x * s, rect.top() + y * s);
-    let pts = vec![
-        p(2.5, 5.0),
-        p(9.0, 5.0),
-        p(11.0, 8.0),
-        p(21.5, 8.0),
-        p(21.5, 19.5),
-        p(2.5, 19.5),
-    ];
-    painter.add(egui::Shape::closed_line(pts, stroke));
-}
-
-pub fn paint_chevron(painter: &egui::Painter, center: Pos2, expanded: bool, color: Color32) {
-    let pts = if expanded {
-        vec![
-            pos2(center.x - 4.0, center.y - 2.0),
-            pos2(center.x + 4.0, center.y - 2.0),
-            pos2(center.x, center.y + 3.0),
-        ]
+pub fn paint_tristate_checkbox(
+    painter: &egui::Painter,
+    rect: Rect,
+    state: TriState,
+    p: &Palette,
+    alpha: f32,
+) {
+    let active = state != TriState::Unchecked;
+    let bg = if active {
+        p.accent.gamma_multiply(alpha)
     } else {
-        vec![
-            pos2(center.x - 2.0, center.y - 4.0),
-            pos2(center.x + 3.0, center.y),
-            pos2(center.x - 2.0, center.y + 4.0),
-        ]
+        p.bg_3.gamma_multiply(alpha)
     };
-    painter.add(egui::Shape::convex_polygon(pts, color, Stroke::NONE));
+    let border = if active {
+        p.accent.gamma_multiply(alpha)
+    } else {
+        p.border.gamma_multiply(alpha)
+    };
+    painter.rect_filled(rect, CornerRadius::same(4), bg);
+    painter.rect_stroke(
+        rect,
+        CornerRadius::same(4),
+        Stroke::new(1.0_f32, border),
+        StrokeKind::Inside,
+    );
+
+    match state {
+        TriState::Checked => {
+            let p1 = pos2(rect.left() + 3.0, rect.center().y);
+            let p2 = pos2(rect.center().x - 0.5, rect.bottom() - 3.5);
+            let p3 = pos2(rect.right() - 2.5, rect.top() + 3.5);
+            painter.add(egui::Shape::line(
+                vec![p1, p2, p3],
+                Stroke::new(1.8_f32, Color32::WHITE),
+            ));
+        }
+        TriState::Indeterminate => {
+            painter.line_segment(
+                [
+                    pos2(rect.left() + 3.5, rect.center().y),
+                    pos2(rect.right() - 3.5, rect.center().y),
+                ],
+                Stroke::new(1.8_f32, Color32::WHITE),
+            );
+        }
+        TriState::Unchecked => {}
+    }
 }
 
 pub fn paint_dashed_rect(
