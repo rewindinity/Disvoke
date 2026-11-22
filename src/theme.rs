@@ -192,32 +192,41 @@ fn accent_colors(mode: ThemeMode, accent: AccentColor) -> (Color32, Color32, Col
 
 pub fn configure_fonts(ctx: &Context) {
     let mut fonts = FontDefinitions::default();
-    let fallback_paths = [
-        "/usr/share/fonts/noto/NotoSansSymbols2-Regular.ttf",
-        "/usr/share/fonts/TTF/DejaVuSans.ttf",
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-        "/usr/share/fonts/dejavu-sans-fonts/DejaVuSans.ttf",
-        "C:\\Windows\\Fonts\\seguisym.ttf",
-        "/System/Library/Fonts/Apple Symbols.ttf",
+    let fallback_groups: &[&[&str]] = &[
+        &[
+            "/usr/share/fonts/noto/NotoSans-Regular.ttf",
+            "/usr/share/fonts/TTF/DejaVuSans.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+            "/usr/share/fonts/dejavu-sans-fonts/DejaVuSans.ttf",
+            "C:\\Windows\\Fonts\\segoeui.ttf",
+            "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",
+        ],
+        &[
+            "/usr/share/fonts/noto/NotoSansSymbols2-Regular.ttf",
+            "C:\\Windows\\Fonts\\seguisym.ttf",
+            "/System/Library/Fonts/Apple Symbols.ttf",
+        ],
     ];
 
-    for (idx, path) in fallback_paths.iter().enumerate() {
-        if let Ok(bytes) = std::fs::read(path) {
-            let name = format!("sys_fallback_{idx}");
-            fonts
-                .font_data
-                .insert(name.clone(), Arc::new(FontData::from_owned(bytes)));
-            fonts
-                .families
-                .entry(FontFamily::Proportional)
-                .or_default()
-                .push(name.clone());
-            fonts
-                .families
-                .entry(FontFamily::Monospace)
-                .or_default()
-                .push(name);
-            break;
+    for (idx, group) in fallback_groups.iter().enumerate() {
+        for path in *group {
+            if let Ok(bytes) = std::fs::read(path) {
+                let name = format!("sys_fallback_{idx}");
+                fonts
+                    .font_data
+                    .insert(name.clone(), Arc::new(FontData::from_owned(bytes)));
+                fonts
+                    .families
+                    .entry(FontFamily::Proportional)
+                    .or_default()
+                    .push(name.clone());
+                fonts
+                    .families
+                    .entry(FontFamily::Monospace)
+                    .or_default()
+                    .push(name);
+                break;
+            }
         }
     }
 

@@ -14,7 +14,7 @@ Whether you want to clean up your Direct Messages (DMs) or wipe your history fro
 - **Edit Before Deleting:** Optionally overwrite message contents with specific custom text or fresh random alphanumeric strings before deleting each message.
 - **Smart Rate Limiting & Batch Mode:** Configurable deletion delays with quick safety presets, automatic HTTP 429 retry handling, and optional anti-ban batch mode with randomized batch sizes and inter-batch breaks.
 - **Resumable Deletion History:** Track deleted message IDs in a JSON file with automatic saving every 20 deletions and skip already-deleted messages in future sessions.
-- **Multilanguage Support:** Built-in English and Polish locales, with support for loading additional locale JSON files from `locales/`.
+- **Multilanguage Support:** Built-in support for 10 languages (English, Polish, German, Dutch, Czech, Slovak, Russian, Italian, Spanish, French), plus runtime loading of additional locale JSON files from `locales/`.
 - **Cross-Platform:** Runs natively on Linux, Windows, and macOS.
 
 ---

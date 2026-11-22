@@ -3,8 +3,18 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::PathBuf;
 
-const EN_JSON: &str = include_str!("../locales/en.json");
-const PL_JSON: &str = include_str!("../locales/pl.json");
+const EMBEDDED_LOCALES: &[(&str, &str)] = &[
+    ("en", include_str!("../locales/en.json")),
+    ("pl", include_str!("../locales/pl.json")),
+    ("de", include_str!("../locales/de.json")),
+    ("nl", include_str!("../locales/nl.json")),
+    ("cs", include_str!("../locales/cs.json")),
+    ("sk", include_str!("../locales/sk.json")),
+    ("ru", include_str!("../locales/ru.json")),
+    ("it", include_str!("../locales/it.json")),
+    ("es", include_str!("../locales/es.json")),
+    ("fr", include_str!("../locales/fr.json")),
+];
 
 #[derive(Debug, Clone)]
 pub struct LocaleInfo {
@@ -21,11 +31,15 @@ pub struct I18n {
 impl I18n {
     pub fn new(initial_lang: &str) -> Self {
         let mut locales = BTreeMap::new();
-        let en_val: Value = serde_json::from_str(EN_JSON).unwrap_or(Value::Null);
-        let pl_val: Value = serde_json::from_str(PL_JSON).unwrap_or(Value::Null);
+        let mut fallback = Value::Null;
 
-        locales.insert("en".to_string(), (locale_display_name("en", &en_val), en_val.clone()));
-        locales.insert("pl".to_string(), (locale_display_name("pl", &pl_val), pl_val));
+        for &(code, raw) in EMBEDDED_LOCALES {
+            let val: Value = serde_json::from_str(raw).unwrap_or(Value::Null);
+            if code == "en" {
+                fallback = val.clone();
+            }
+            locales.insert(code.to_string(), (locale_display_name(code, &val), val));
+        }
 
         for dir in external_locale_dirs() {
             let Ok(entries) = fs::read_dir(dir) else {
@@ -49,8 +63,8 @@ impl I18n {
         }
 
         let mut i18n = Self {
-            active: en_val.clone(),
-            fallback: en_val,
+            active: fallback.clone(),
+            fallback,
             locales,
         };
         i18n.set_lang(initial_lang);
@@ -115,8 +129,16 @@ fn locale_display_name(code: &str, val: &Value) -> String {
         return name.to_string();
     }
     match code {
+        "cs" => "Čeština".to_string(),
+        "de" => "Deutsch".to_string(),
         "en" => "English".to_string(),
+        "es" => "Español".to_string(),
+        "fr" => "Français".to_string(),
+        "it" => "Italiano".to_string(),
+        "nl" => "Nederlands".to_string(),
         "pl" => "Polski".to_string(),
+        "ru" => "Русский".to_string(),
+        "sk" => "Slovenčina".to_string(),
         other => other.to_string(),
     }
 }
@@ -135,6 +157,41 @@ fn external_locale_dirs() -> Vec<PathBuf> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::BTreeSet;
+
+    fn collect_keys(val: &Value, prefix: &str, out: &mut BTreeMap<String, String>) {
+        match val {
+            Value::Object(map) => {
+                for (k, v) in map {
+                    let path = if prefix.is_empty() {
+                        k.clone()
+                    } else {
+                        format!("{prefix}.{k}")
+                    };
+                    collect_keys(v, &path, out);
+                }
+            }
+            Value::String(s) => {
+                out.insert(prefix.to_string(), s.clone());
+            }
+            _ => {}
+        }
+    }
+
+    fn extract_placeholders(s: &str) -> BTreeSet<String> {
+        let mut set = BTreeSet::new();
+        let mut rest = s;
+        while let Some(start) = rest.find('{') {
+            rest = &rest[start + 1..];
+            if let Some(end) = rest.find('}') {
+                set.insert(rest[..end].to_string());
+                rest = &rest[end + 1..];
+            } else {
+                break;
+            }
+        }
+        set
+    }
 
     #[test]
     fn loads_locales_and_formats_placeholders() {
@@ -147,5 +204,35 @@ mod tests {
 
         i18n.set_lang("unknown");
         assert_eq!(i18n.t("nav.dashboard"), "Dashboard");
+    }
+
+    #[test]
+    fn all_embedded_locales_are_valid_and_complete() {
+        let en_val: Value = serde_json::from_str(EMBEDDED_LOCALES[0].1).unwrap();
+        let mut en_keys = BTreeMap::new();
+        collect_keys(&en_val, "", &mut en_keys);
+        assert!(!en_keys.is_empty());
+
+        for &(code, raw) in EMBEDDED_LOCALES {
+            let val: Value = serde_json::from_str(raw)
+                .unwrap_or_else(|e| panic!("invalid JSON in {code}.json: {e}"));
+            let mut loc_keys = BTreeMap::new();
+            collect_keys(&val, "", &mut loc_keys);
+
+            for (key, en_str) in &en_keys {
+                let loc_str = loc_keys
+                    .get(key)
+                    .unwrap_or_else(|| panic!("missing key '{key}' in {code}.json"));
+                assert!(
+                    !loc_str.trim().is_empty(),
+                    "empty translation for '{key}' in {code}.json"
+                );
+                assert_eq!(
+                    extract_placeholders(en_str),
+                    extract_placeholders(loc_str),
+                    "placeholder mismatch for '{key}' in {code}.json"
+                );
+            }
+        }
     }
 }
