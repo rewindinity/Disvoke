@@ -5,12 +5,26 @@ on:
     tags:
       - "v*"
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            asset_name: disvoke-linux-x64
+            bin_path: target/x86_64-unknown-linux-gnu/release/disvoke
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            asset_name: disvoke-windows-x64.exe
+            bin_path: target/x86_64-pc-windows-msvc/release/disvoke.exe
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            asset_name: disvoke-macos-arm64
+            bin_path: target/aarch64-apple-darwin/release/disvoke
+
+    runs-on: ${{ matrix.os }}
 
     permissions:
       contents: write
@@ -19,24 +33,27 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
         with:
-          node-version: 24
-          cache: "npm"
+          targets: ${{ matrix.target }}
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Install Wine
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
         run: |
-          sudo dpkg --add-architecture i386
           sudo apt-get update
-          sudo apt-get install -y wine64 wine32
+          sudo apt-get install -y libgtk-3-dev libxkbcommon-dev libwayland-dev libgl1-mesa-dev
 
-      - name: Build and Publish
-        run: |
-          npx electron-builder --win --x64 --publish always
-          npx electron-builder --linux --x64 --arm64 --publish always
+      - name: Build release binary
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Prepare release asset
+        shell: bash
+        run: cp "${{ matrix.bin_path }}" "${{ matrix.asset_name }}"
+
+      - name: Publish Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.asset_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

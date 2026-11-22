@@ -1,123 +1,69 @@
 # Disvoke
 
-![Disvoke Icon](src/resources/logo.ico)
+![Disvoke Icon](assets/logo.png)
 
-**Disvoke** is an Electron-based desktop application designed to help you efficiently and safely delete your past messages using a Discord GDPR privacy data pack.
+**Disvoke** is a native Rust desktop application built with `egui` (`eframe`) designed to help you efficiently and safely delete your past messages using a Discord GDPR privacy data pack.
 
-Whether you want to clean up your Direct Messages (DMs) or wipe your history from Discord servers, Disvoke automates the process while respecting Discord's API rate limits.
+Whether you want to clean up your Direct Messages (DMs) or wipe your history from Discord servers, Disvoke automates the process with minimal memory footprint while respecting Discord's API rate limits.
 
-## ✨ Features
+## Features
 
+- **Lightweight Native UI:** Rebuilt in Rust with `egui`, replacing Electron's Chromium runtime with a single native binary.
 - **Comprehensive Deletion:** Delete both Direct Messages (DMs) and Server (Guild) messages parsed directly from your Discord data pack.
-- **Smart Rate Limiting:** Built-in deletion delays and rate-limit handling to protect your account from being flagged for API abuse.
-- **Multilanguage Support:** The interface supports multiple languages, making it accessible to a global user base.
-- **Cross-Platform:** Available for Windows, macOS, and Linux.
+- **Smart Rate Limiting & Batch Mode:** Configurable deletion delays, automatic HTTP 429 retry handling, and optional anti-ban batch mode with randomized batch sizes and inter-batch breaks.
+- **Resumable Deletion History:** Track deleted message IDs in a JSON file with automatic saving every 20 deletions and skip already-deleted messages in future sessions.
+- **Multilanguage Support:** Built-in English and Polish locales, with support for loading additional locale JSON files from `locales/`.
+- **Cross-Platform:** Runs natively on Linux, Windows, and macOS.
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
-There are two ways to get Disvoke running on your machine: downloading a pre-built release (recommended for most users) or building it yourself from the source code.
+### Option 1: Download from Releases
 
-### Option 1: Download from Releases (Recommended)
-
-You can download the ready-to-use installers and executables for your operating system directly from the [Releases](https://github.com/Rewindinity/Disvoke/releases) page.
-
-- **Windows:** Download the `.exe` installer.
-- **Linux:** Download the `.AppImage` file.
+Download the pre-built executable for your operating system from the [Releases](https://github.com/Rewindinity/Disvoke/releases) page.
 
 ### Option 2: Build from Source
 
-If you want to contribute to the project or compile the application yourself, follow the instructions below.
-
 #### Prerequisites
 
-Before you begin, ensure you have the following installed on your system:
+- **Rust toolchain** (Edition 2024 / `rustc` 1.85+ and `cargo`)
+- On Linux: standard X11/Wayland and OpenGL development headers, plus GTK3 or xdg-desktop-portal for native file dialogs.
 
-- **Node.js**: Minimum version **v18** or higher (Tested and recommended on **v22**).
-- **npm**: Usually comes bundled with Node.js.
-- **OS-Specific Build Tools**: Depending on your operating system, `electron-builder` may require native compilation tools (e.g., `build-essential` on Linux, Visual Studio Build Tools on Windows, or Xcode Command Line Tools on macOS).
-
-#### Clone and Install
-
-First, clone the repository and install the required dependencies:
+#### Clone and Run
 
 ```bash
 git clone https://github.com/Rewindinity/Disvoke.git
 cd Disvoke
-npm install
+cargo run --release
 ```
 
-If you don't want to build the app, just fast startup, use: `npm run start`
+#### Building Release Binaries
 
-#### Building the App
-
-Disvoke provides a convenient bash script (`build.sh`) to easily target specific platforms, as well as the ability to build directly using `electron-builder`.
-
-**Method A: Using `build.sh` (Recommended for Unix/Linux/macOS or Git Bash)**
-
-Run the script with your desired target platform:
+You can use `cargo build --release` directly or the helper script `./build.sh`:
 
 ```bash
-# Build Linux x64 AppImage
-./build.sh linux
+# Build optimized release binary for current host
+./build.sh
 
-# Build Linux ARM64 AppImage
-./build.sh linux-arm
-
-# Build Windows x64 installer
-./build.sh windows
-
-# Build macOS x64 DMG (requires macOS)
-./build.sh mac
-
-# Build macOS ARM64 DMG (requires macOS)
-./build.sh mac-arm
-
-# Build for all available platforms at once
-./build.sh all
+# Or build directly with Cargo
+cargo build --release
 ```
 
-**Method B: Using standard npm / npx commands**
-
-If you cannot run bash scripts (e.g., standard Windows Command Prompt) or prefer using Node commands directly, you can trigger `electron-builder` via `npx`:
-
-```bash
-# Build for Linux
-npx electron-builder --linux --x64 --publish never
-
-# Build for Linux ARM
-npx electron-builder --linux --arm64 --publish never
-
-# Build for Windows
-npx electron-builder --win --x64 --publish never
-
-# Build for macOS - Intel CPUs (requires macOS)
-npx electron-builder --mac --x64 --publish never
-
-# Buiild for macOS - Apple ARM CPUs (requires macOS)
-npx electron-builder --mac --arm64 --publish never
-
-# Build for the current platform you are running on
-npx electron-builder --publish never
-```
-
-_(Note: You can also add these commands to the `"scripts"` section of your `package.json` to run them via `npm run build:win`, etc.)_
-
-All compiled executables and installers will be output to the `build/` (or default `electron-builder` output) directory.
+The compiled executable will be located at `target/release/disvoke` (or `target/release/disvoke.exe` on Windows).
 
 ---
 
-## 📝 How to Use
+## How to Use
 
-1. **Request your Data:** Go to your Discord Settings -> Privacy & Safety -> "Request all of my data". Wait for Discord to email you the ZIP file.
+1. **Request your Data:** Go to Discord Settings -> Privacy & Safety -> "Request all of my data". Wait for Discord to email you the ZIP file.
 2. **Extract the Pack:** Extract the downloaded ZIP file to a folder on your computer.
-3. **Get your Token:** Obtain your Discord account authorization token. _(Note: Do not share your token with anyone)._
-4. **Run Disvoke:** Open the app, input your token, configure your deletion delay (rate limit), and point the app to the extracted data pack folder.
-5. **Review & Delete:** Filter the messages you want to remove, review the selection, and start the deletion process!
+3. **Get your Token:** Obtain your Discord account authorization token. _(Do not share your token with anyone.)_
+4. **Run Disvoke:** Open the app, configure your token and deletion options in **Settings**, and load the extracted data pack folder (or drag and drop it into the window).
+5. **Review & Delete:** Filter the messages you want to remove, review the selection, and start the deletion process.
 
 ---
 
-## ⚠️ Disclaimer
+## Disclaimer
 
-Automating user accounts (self-botting) is technically against Discord's Terms of Service. Disvoke includes rate-limiting to mitigate risks, but you use this software entirely at your own risk. The developers of Disvoke are not responsible for any account bans, suspensions, or lost data resulting from the use of this application.
+Automating user accounts (self-botting) is technically against Discord's Terms of Service. Disvoke includes rate-limiting and batch mode options to mitigate risks, but you use this software entirely at your own risk. The developers of Disvoke are not responsible for any account bans, suspensions, or lost data resulting from the use of this application.
