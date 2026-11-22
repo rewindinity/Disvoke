@@ -1,9 +1,10 @@
+/target/
+old/node_modules/
 node_modules/
 dist/
 build/
 out/
 .tmp/
-.vite/
 *.log
 
 .env
@@ -15,12 +16,5 @@ out/
 
 .DS_Store
 Thumbs.db
-
-.eslintcache
-.stylelintcache
-.parcel-cache
-.nyc_output
-
 .vscode/
 release/
-.webpack/
