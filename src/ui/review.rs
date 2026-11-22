@@ -52,7 +52,10 @@ pub fn render(app: &mut DisvokeApp, ui: &mut Ui) {
         ui.set_min_size(vec2(ui.available_width(), tree_h));
         ui.set_max_height(tree_h);
 
-        if app.pack_data.is_none() {
+        if app.pack_data.is_none()
+            && app.dm.fetched_info.is_none()
+            && app.filtered_messages.is_empty()
+        {
             ui.centered_and_justified(|ui| {
                 ui.label(RichText::new(empty_lbl).color(TEXT_2));
             });

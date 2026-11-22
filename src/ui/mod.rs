@@ -1,4 +1,5 @@
 mod dashboard;
+mod dm;
 mod pack;
 mod progress;
 mod review;
@@ -21,6 +22,7 @@ pub fn render_app(app: &mut DisvokeApp, ctx: &Context) {
         .show(ctx, |ui| match app.page {
             Page::Dashboard => dashboard::render(app, ui),
             Page::Pack => pack::render(app, ui, ctx),
+            Page::DirectDm => dm::render(app, ui, ctx),
             Page::Review => review::render(app, ui),
             Page::Progress => progress::render(app, ui),
             Page::Settings => settings::render(app, ui, ctx),
@@ -148,6 +150,7 @@ fn render_sidebar(app: &mut DisvokeApp, ctx: &Context) {
     let nav_items = [
         (Page::Dashboard, app.i18n.t("nav.dashboard").to_string()),
         (Page::Pack, app.i18n.t("nav.pack").to_string()),
+        (Page::DirectDm, app.i18n.t("nav.directDm").to_string()),
         (Page::Review, app.i18n.t("nav.review").to_string()),
         (Page::Progress, app.i18n.t("nav.progress").to_string()),
         (Page::Settings, app.i18n.t("nav.settings").to_string()),

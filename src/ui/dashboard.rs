@@ -80,6 +80,12 @@ pub fn render(app: &mut DisvokeApp, ui: &mut Ui) {
             format_number(pack.servers.len()),
             format_number(pack.dms.len()),
         )
+    } else if let Some(dm) = &app.dm.fetched_info {
+        (
+            format_number(dm.total_fetched),
+            "0".to_string(),
+            "1".to_string(),
+        )
     } else {
         ("—".to_string(), "—".to_string(), "—".to_string())
     };
@@ -127,11 +133,15 @@ pub fn render(app: &mut DisvokeApp, ui: &mut Ui) {
     ui.add_space(24.0);
 
     let load_pack_label = app.i18n.t("dashboard.loadPack").to_string();
+    let direct_dm_label = app.i18n.t("dashboard.directDm").to_string();
     let settings_label = app.i18n.t("dashboard.settings").to_string();
     ui.horizontal(|ui| {
         ui.spacing_mut().item_spacing.x = 12.0;
         if theme::primary_button(ui, &load_pack_label, true).clicked() {
             app.page = Page::Pack;
+        }
+        if theme::outline_button(ui, &direct_dm_label, true).clicked() {
+            app.page = Page::DirectDm;
         }
         if theme::outline_button(ui, &settings_label, true).clicked() {
             app.page = Page::Settings;

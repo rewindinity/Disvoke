@@ -2,6 +2,7 @@
   "nav": {
     "dashboard": "Pulpit",
     "pack": "Paczka danych",
+    "directDm": "Bezpośredni DM",
     "review": "Przegląd",
     "progress": "Usuwanie",
     "settings": "Ustawienia"
@@ -15,6 +16,7 @@
     "statDMs": "Konwersacji DM",
     "statSelected": "Wybranych do usunięcia",
     "loadPack": "Załaduj paczkę danych →",
+    "directDm": "Wyczyść DM po ID →",
     "settings": "Ustawienia"
   },
   "pack": {
@@ -65,7 +67,31 @@
     "logBatchMode": "📦 Tryb partii: {min}–{max} wiad./partia, przerwy {breakMin}–{breakMax} min",
     "logBatchStart": "📦 Partia {index}/{total} rozpoczęta — {size} wiadomości",
     "logBatchBreak": "⏸ Partia {index}/{total} gotowa — przerwa ~{mins} min przed kolejną",
-    "batchBreakStatus": "⏸ Przerwa między partiami — ~{mins} min pozostało"
+    "batchBreakStatus": "⏸ Przerwa między partiami — ~{mins} min pozostało",
+    "logEditCustom": "✏ Edycja przed usunięciem: własny tekst",
+    "logEditRandom": "✏ Edycja przed usunięciem: losowa treść ({len} znaków)",
+    "logEdited": "✏ Edytowano wiadomość #{id}",
+    "logEditError": "⚠ Błąd edycji #{id}{detail} — kontynuuję usuwanie"
+  },
+  "dm": {
+    "title": "Wyczyść konwersację DM",
+    "subtitle": "Pobierz i usuń swoje wiadomości z wybranej konwersacji DM używając tylko tokenu i ID kanału DM (lub ID użytkownika) — bez paczki prywatności.",
+    "connectionSection": "Cel konwersacji DM",
+    "channelLabel": "ID kanału DM lub ID użytkownika",
+    "channelPlaceholder": "np. 123456789012345678 lub discord.com/channels/@me/...",
+    "channelHint": "Włącz Tryb dewelopera w Discordzie -> PPM na konwersację lub użytkownika -> Kopiuj ID (albo wklej link do DM).",
+    "searchLabel": "Szukaj w treści:",
+    "searchPlaceholder": "np. hello (zostaw puste = wszystkie)",
+    "fetchBtn": "Pobierz wiadomości",
+    "cancelBtn": "Anuluj",
+    "fetching": "⏳ Pobieranie wiadomości... przeskanowano {scanned}, znaleziono {found} Twoich",
+    "fetchedSummary": "✓ {name} ({id}) — znaleziono {found} wiadomości ({selected} zaznaczonych)",
+    "noMessages": "Nie znaleziono Twoich wiadomości możliwych do usunięcia w tej konwersacji DM.",
+    "noChannelId": "Podaj ID kanału DM lub ID użytkownika.",
+    "invalidChannelId": "Nieprawidłowy format ID. Podaj liczbowe ID Discord lub link do DM.",
+    "stopped": "Pobieranie anulowane przez użytkownika.",
+    "reviewBtn": "Przejdź do przeglądu →",
+    "deleteNowBtn": "🗑 Usuń zaznaczone wiadomości"
   },
   "settings": {
     "title": "Ustawienia",
@@ -104,7 +130,18 @@
     "historyClear": "🗑 Wyczyść z pamięci",
     "historyLoadErr": "Nieprawidłowy plik historii.",
     "historyLoaded": "Wczytano {count} usuniętych ID.",
-    "historyCleared": "Historia wyczyszczona z pamięci."
+    "historyCleared": "Historia wyczyszczona z pamięci.",
+    "editSection": "Edycja przed usunięciem",
+    "editEnabledLabel": "Edytuj treść wiadomości przed usunięciem",
+    "editEnabledHint": "Nadpisuje treść każdej wiadomości przed jej usunięciem. Dodaje jedno dodatkowe żądanie API na wiadomość.",
+    "editModeLabel": "Tryb nowej treści",
+    "editModeCustom": "Konkretny tekst",
+    "editModeRandom": "Losowa treść",
+    "editCustomLabel": "Tekst zastępczy",
+    "editCustomPlaceholder": "np. [usunięto]",
+    "editCustomHint": "Tekst, którym zostanie nadpisana każda wiadomość przed usunięciem (maks. 2000 znaków).",
+    "editRandomLenLabel": "Długość losowej treści (znaki)",
+    "editRandomLenHint": "Każda wiadomość zostanie nadpisana nowym losowym ciągiem znaków o tej długości (1–2000)."
   },
   "confirm": {
     "title": "⚠️ OSTRZEŻENIE",

@@ -88,7 +88,7 @@ fn value_to_string(v: &Value) -> Option<String> {
     }
 }
 
-fn format_timestamp(ts: &str) -> String {
+pub(crate) fn format_timestamp(ts: &str) -> String {
     if ts.is_empty() {
         return String::new();
     }
@@ -104,7 +104,7 @@ fn format_timestamp(ts: &str) -> String {
     ts.to_string()
 }
 
-fn make_preview(content: &str) -> String {
+pub(crate) fn make_preview(content: &str) -> String {
     let mut out = String::with_capacity(content.len().min(96));
     for ch in content.chars().take(80) {
         out.push(if ch == '\n' || ch == '\r' { ' ' } else { ch });

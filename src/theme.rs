@@ -425,6 +425,18 @@ pub fn paint_nav_icon(painter: &egui::Painter, rect: Rect, page: Page, color: Co
             ];
             painter.add(egui::Shape::closed_line(pts, stroke));
         }
+        Page::DirectDm => {
+            let pts = vec![
+                p(3.5, 4.5),
+                p(20.5, 4.5),
+                p(20.5, 16.5),
+                p(9.5, 16.5),
+                p(4.5, 20.5),
+                p(5.5, 16.5),
+                p(3.5, 16.5),
+            ];
+            painter.add(egui::Shape::closed_line(pts, stroke));
+        }
         Page::Review => {
             let box_pts = vec![p(20.0, 13.0), p(20.0, 20.0), p(4.0, 20.0), p(4.0, 4.0), p(15.0, 4.0)];
             painter.add(egui::Shape::line(box_pts, stroke));

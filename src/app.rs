@@ -1,11 +1,11 @@
 use crate::discord::{
-    DeletionEvent, DeletionJob, StopSignal, ValidatedUser, fetch_avatar_bytes, run_deletion,
-    validate_token,
+    DeletionEvent, DeletionJob, DmFetchEvent, StopSignal, ValidatedUser, extract_snowflake,
+    fetch_avatar_bytes, fetch_dm_messages, run_deletion, validate_token,
 };
 use crate::history::{AUTO_SAVE_INTERVAL, DeletionHistory};
 use crate::i18n::I18n;
-use crate::pack::{FilteredMessage, GroupType, PackData, filter_pack, parse_pack};
-use crate::store::{Settings, Store};
+use crate::pack::{FilteredMessage, GroupType, Message, PackData, filter_pack, parse_pack};
+use crate::store::{EditContentMode, Settings, Store};
 use crate::theme::{self, format_number};
 use crate::ui;
 use chrono::Local;
@@ -21,6 +21,7 @@ use tokio::sync::mpsc;
 pub enum Page {
     Dashboard,
     Pack,
+    DirectDm,
     Review,
     Progress,
     Settings,
@@ -85,6 +86,26 @@ pub enum ModalState {
     ConfirmDeletion { count: usize },
 }
 
+#[derive(Debug, Clone)]
+pub struct DmFetchedInfo {
+    pub channel_id: String,
+    pub channel_name: String,
+    pub total_fetched: usize,
+}
+
+#[derive(Default)]
+pub struct DmState {
+    pub target_input: String,
+    pub search_filter: String,
+    pub fetching: bool,
+    pub scanned: usize,
+    pub found: usize,
+    pub status: Option<StatusMessage>,
+    pub fetched_info: Option<DmFetchedInfo>,
+    pub raw_messages: Vec<Message>,
+    pub stop_signal: Option<Arc<StopSignal>>,
+}
+
 pub enum AppMsg {
     FolderPicked(Option<PathBuf>),
     PackParsed {
@@ -98,6 +119,7 @@ pub enum AppMsg {
     AvatarLoaded(ColorImage),
     HistoryPathPicked(Option<PathBuf>),
     HistoryFilePicked(Option<PathBuf>),
+    DmFetch(DmFetchEvent),
     Deletion(DeletionEvent),
 }
 
@@ -149,6 +171,7 @@ pub struct DisvokeApp {
     pub filter_servers: bool,
     pub filter_dms: bool,
     pub filter_search: String,
+    pub dm: DmState,
 
     pub filtered_messages: Vec<FilteredMessage>,
     pub selected_ids: HashSet<String>,
@@ -210,6 +233,7 @@ impl DisvokeApp {
             filter_servers: true,
             filter_dms: true,
             filter_search: String::new(),
+            dm: DmState::default(),
             filtered_messages: Vec::new(),
             selected_ids: HashSet::new(),
             review_groups: Vec::new(),
@@ -498,6 +522,20 @@ impl DisvokeApp {
         self.draft_settings.batch_mode.max_batch = self.draft_settings.batch_mode.max_batch.clamp(1, 9999);
         self.draft_settings.batch_mode.min_break_min = self.draft_settings.batch_mode.min_break_min.clamp(1, 9999);
         self.draft_settings.batch_mode.max_break_min = self.draft_settings.batch_mode.max_break_min.clamp(1, 9999);
+        self.draft_settings.edit_before_delete.random_length = self
+            .draft_settings
+            .edit_before_delete
+            .random_length
+            .clamp(1, 2000);
+        if self.draft_settings.edit_before_delete.custom_text.chars().count() > 2000 {
+            self.draft_settings.edit_before_delete.custom_text = self
+                .draft_settings
+                .edit_before_delete
+                .custom_text
+                .chars()
+                .take(2000)
+                .collect();
+        }
 
         let lang_changed = self.draft_settings.lang != self.settings.lang;
         self.settings = self.draft_settings.clone();
@@ -518,6 +556,101 @@ impl DisvokeApp {
             },
             Instant::now(),
         ));
+    }
+
+    pub fn start_dm_fetch(&mut self, ctx: &Context) {
+        if self.dm.fetching || self.progress.running {
+            return;
+        }
+        let token = self.draft_settings.token.trim().to_string();
+        if token.is_empty() {
+            self.dm.status = Some(StatusMessage {
+                text: self.i18n.t("settings.noToken").to_string(),
+                kind: StatusKind::Err,
+            });
+            return;
+        }
+        self.settings.token = token.clone();
+
+        if self.dm.target_input.trim().is_empty() {
+            self.dm.status = Some(StatusMessage {
+                text: self.i18n.t("dm.noChannelId").to_string(),
+                kind: StatusKind::Err,
+            });
+            return;
+        }
+        let Some(target_id) = extract_snowflake(&self.dm.target_input) else {
+            self.dm.status = Some(StatusMessage {
+                text: self.i18n.t("dm.invalidChannelId").to_string(),
+                kind: StatusKind::Err,
+            });
+            return;
+        };
+
+        self.dm.fetching = true;
+        self.dm.scanned = 0;
+        self.dm.found = 0;
+        self.dm.status = None;
+        self.dm.fetched_info = None;
+        self.dm.raw_messages.clear();
+
+        let stop = Arc::new(StopSignal::new());
+        self.dm.stop_signal = Some(stop.clone());
+
+        let (fetch_tx, mut fetch_rx) = mpsc::unbounded_channel();
+        let app_tx = self.tx.clone();
+        let forward_ctx = ctx.clone();
+        let repaint_ctx = ctx.clone();
+
+        self.rt.spawn(async move {
+            while let Some(ev) = fetch_rx.recv().await {
+                let _ = app_tx.send(AppMsg::DmFetch(ev));
+                forward_ctx.request_repaint();
+            }
+        });
+
+        let client = self.http.clone();
+        self.rt.spawn(async move {
+            fetch_dm_messages(client, token, target_id, stop, fetch_tx, move || {
+                repaint_ctx.request_repaint();
+            })
+            .await;
+        });
+    }
+
+    pub fn cancel_dm_fetch(&mut self) {
+        if let Some(sig) = &self.dm.stop_signal {
+            sig.request_stop();
+        }
+    }
+
+    pub fn apply_dm_filter(&mut self) {
+        let Some(info) = &self.dm.fetched_info else {
+            return;
+        };
+        let needle = self.dm.search_filter.trim().to_lowercase();
+        let group_name = info.channel_name.clone();
+
+        self.filtered_messages = self
+            .dm
+            .raw_messages
+            .iter()
+            .filter(|m| needle.is_empty() || m.content.to_lowercase().contains(&needle))
+            .map(|m| FilteredMessage {
+                msg: m.clone(),
+                group_name: group_name.clone(),
+                group_type: GroupType::Dm,
+            })
+            .collect();
+
+        self.selected_ids = self
+            .filtered_messages
+            .iter()
+            .filter(|m| !self.history.deleted_ids.contains(&m.msg.id))
+            .map(|m| m.msg.id.clone())
+            .collect();
+
+        self.rebuild_review_tree();
     }
 
     pub fn request_start_deletion(&mut self) {
@@ -583,6 +716,18 @@ impl DisvokeApp {
             self.add_log(batch_log, LogLevel::Info);
         }
 
+        let edit_cfg = &self.settings.edit_before_delete;
+        if edit_cfg.enabled {
+            let edit_log = match edit_cfg.mode {
+                EditContentMode::Custom => self.i18n.t("progress.logEditCustom").to_string(),
+                EditContentMode::Random => self.i18n.fmt(
+                    "progress.logEditRandom",
+                    &[("len", &edit_cfg.random_length.to_string())],
+                ),
+            };
+            self.add_log(edit_log, LogLevel::Info);
+        }
+
         if !self.history.history_path.trim().is_empty() {
             let path = self.history.history_path.clone();
             self.add_log(
@@ -619,6 +764,11 @@ impl DisvokeApp {
         } else {
             None
         };
+        let edit_before_delete = if self.settings.edit_before_delete.enabled {
+            Some(self.settings.edit_before_delete.clone())
+        } else {
+            None
+        };
         let history_snapshot = self.history.deleted_ids.clone();
 
         self.rt.spawn(async move {
@@ -629,6 +779,7 @@ impl DisvokeApp {
                     token,
                     delay_secs: delay,
                     batch_mode,
+                    edit_before_delete,
                     history_set: history_snapshot,
                     stop,
                     tx: del_tx,
@@ -763,7 +914,91 @@ impl DisvokeApp {
                     }
                 }
                 AppMsg::HistoryFilePicked(None) => {}
+                AppMsg::DmFetch(ev) => self.handle_dm_fetch_event(ev, ctx),
                 AppMsg::Deletion(ev) => self.handle_deletion_event(ev),
+            }
+        }
+    }
+
+    fn handle_dm_fetch_event(&mut self, ev: DmFetchEvent, ctx: &Context) {
+        match ev {
+            DmFetchEvent::Progress { scanned, found } => {
+                self.dm.scanned = scanned;
+                self.dm.found = found;
+            }
+            DmFetchEvent::Error(err) => {
+                self.dm.fetching = false;
+                self.dm.stop_signal = None;
+                let text = self.i18n.fmt("settings.tokenErr", &[("error", &err)]);
+                self.dm.status = Some(StatusMessage {
+                    text,
+                    kind: StatusKind::Err,
+                });
+            }
+            DmFetchEvent::Done {
+                user,
+                channel_id,
+                channel_name,
+                messages,
+                cancelled,
+            } => {
+                self.dm.fetching = false;
+                self.dm.stop_signal = None;
+
+                let user_changed = self
+                    .validated_user
+                    .as_ref()
+                    .is_none_or(|u| u.id != user.id || u.avatar != user.avatar);
+                if user_changed {
+                    self.avatar_texture = None;
+                    if let Some(avatar_hash) = user.avatar.clone() {
+                        let client = self.http.clone();
+                        let uid = user.id.clone();
+                        let tx = self.tx.clone();
+                        let ctx = ctx.clone();
+                        self.rt.spawn(async move {
+                            if let Some(bytes) =
+                                fetch_avatar_bytes(&client, &uid, &avatar_hash).await
+                                && let Some(img) = decode_circle_avatar(&bytes)
+                            {
+                                let _ = tx.send(AppMsg::AvatarLoaded(img));
+                                ctx.request_repaint();
+                            }
+                        });
+                    }
+                    self.validated_user = Some(user);
+                }
+
+                self.dm.fetched_info = Some(DmFetchedInfo {
+                    channel_id,
+                    channel_name,
+                    total_fetched: messages.len(),
+                });
+                self.dm.raw_messages = messages;
+                self.apply_dm_filter();
+
+                if cancelled {
+                    self.dm.status = Some(StatusMessage {
+                        text: self.i18n.t("dm.stopped").to_string(),
+                        kind: StatusKind::Neutral,
+                    });
+                } else {
+                    self.dm.status = None;
+                }
+
+                let skipped = self
+                    .filtered_messages
+                    .len()
+                    .saturating_sub(self.selected_ids.len());
+                if skipped > 0 {
+                    self.add_log(
+                        format!(
+                            "History: {} message(s) already deleted in a previous session — deselected automatically.",
+                            format_number(skipped)
+                        ),
+                        LogLevel::Info,
+                    );
+                }
             }
         }
     }
@@ -785,6 +1020,29 @@ impl DisvokeApp {
                     ],
                 );
                 self.add_log(text, LogLevel::Info);
+            }
+            DeletionEvent::Edited { msg_id } => {
+                let log = self.i18n.fmt("progress.logEdited", &[("id", &msg_id)]);
+                self.add_log(log, LogLevel::Info);
+            }
+            DeletionEvent::EditFailed {
+                msg_id,
+                status,
+                reason,
+            } => {
+                let detail = if !status.is_empty() {
+                    if !reason.is_empty() {
+                        format!(" [HTTP {status}: {reason}]")
+                    } else {
+                        format!(" [HTTP {status}]")
+                    }
+                } else {
+                    String::new()
+                };
+                let log = self
+                    .i18n
+                    .fmt("progress.logEditError", &[("id", &msg_id), ("detail", &detail)]);
+                self.add_log(log, LogLevel::Warn);
             }
             DeletionEvent::Success {
                 msg_id,

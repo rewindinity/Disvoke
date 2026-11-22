@@ -1,4 +1,5 @@
 use crate::app::{DisvokeApp, StatusKind, StatusMessage};
+use crate::store::EditContentMode;
 use crate::theme::{
     self, BG_3, BORDER, DANGER, RADIUS, SUCCESS, TEXT_0, TEXT_1, TEXT_2, format_number,
 };
@@ -23,6 +24,18 @@ pub fn render(app: &mut DisvokeApp, ui: &mut Ui, ctx: &Context) {
     let deletion_sec = app.i18n.t("settings.deletionSection").to_string();
     let delay_lbl = app.i18n.t("settings.delayLabel").to_string();
     let delay_hint = app.i18n.t("settings.delayHint").to_string();
+
+    let edit_sec = app.i18n.t("settings.editSection").to_string();
+    let edit_enabled_lbl = app.i18n.t("settings.editEnabledLabel").to_string();
+    let edit_enabled_hint = app.i18n.t("settings.editEnabledHint").to_string();
+    let edit_mode_lbl = app.i18n.t("settings.editModeLabel").to_string();
+    let edit_mode_custom = app.i18n.t("settings.editModeCustom").to_string();
+    let edit_mode_random = app.i18n.t("settings.editModeRandom").to_string();
+    let edit_custom_lbl = app.i18n.t("settings.editCustomLabel").to_string();
+    let edit_custom_ph = app.i18n.t("settings.editCustomPlaceholder").to_string();
+    let edit_custom_hint = app.i18n.t("settings.editCustomHint").to_string();
+    let edit_random_len_lbl = app.i18n.t("settings.editRandomLenLabel").to_string();
+    let edit_random_len_hint = app.i18n.t("settings.editRandomLenHint").to_string();
 
     let batch_sec = app.i18n.t("settings.batchSection").to_string();
     let batch_enabled_lbl = app.i18n.t("settings.batchEnabledLabel").to_string();
@@ -104,6 +117,70 @@ pub fn render(app: &mut DisvokeApp, ui: &mut Ui, ctx: &Context) {
                 );
                 ui.add_space(4.0);
                 theme::field_hint(ui, &delay_hint);
+            });
+
+            ui.add_space(16.0);
+
+            theme::card_frame().show(ui, |ui| {
+                ui.set_width(ui.available_width());
+                theme::section_title(ui, &edit_sec);
+                ui.checkbox(
+                    &mut app.draft_settings.edit_before_delete.enabled,
+                    RichText::new(&edit_enabled_lbl).strong().color(TEXT_0),
+                );
+                ui.add_space(4.0);
+                theme::field_hint(ui, &edit_enabled_hint);
+
+                if app.draft_settings.edit_before_delete.enabled {
+                    ui.add_space(14.0);
+                    theme::field_label(ui, &edit_mode_lbl);
+                    ui.add_space(4.0);
+                    ui.horizontal(|ui| {
+                        ui.spacing_mut().item_spacing.x = 18.0;
+                        ui.radio_value(
+                            &mut app.draft_settings.edit_before_delete.mode,
+                            EditContentMode::Custom,
+                            RichText::new(&edit_mode_custom).color(TEXT_0),
+                        );
+                        ui.radio_value(
+                            &mut app.draft_settings.edit_before_delete.mode,
+                            EditContentMode::Random,
+                            RichText::new(&edit_mode_random).color(TEXT_0),
+                        );
+                    });
+
+                    ui.add_space(12.0);
+                    match app.draft_settings.edit_before_delete.mode {
+                        EditContentMode::Custom => {
+                            theme::field_label(ui, &edit_custom_lbl);
+                            ui.add_space(4.0);
+                            ui.add(
+                                TextEdit::singleline(
+                                    &mut app.draft_settings.edit_before_delete.custom_text,
+                                )
+                                .hint_text(&edit_custom_ph)
+                                .char_limit(2000)
+                                .desired_width((ui.available_width() - 8.0).max(200.0))
+                                .margin(Margin::symmetric(12, 8)),
+                            );
+                            ui.add_space(4.0);
+                            theme::field_hint(ui, &edit_custom_hint);
+                        }
+                        EditContentMode::Random => {
+                            theme::field_label(ui, &edit_random_len_lbl);
+                            ui.add_space(4.0);
+                            ui.add_sized(
+                                [120.0, 32.0],
+                                DragValue::new(
+                                    &mut app.draft_settings.edit_before_delete.random_length,
+                                )
+                                .range(1..=2000),
+                            );
+                            ui.add_space(4.0);
+                            theme::field_hint(ui, &edit_random_len_hint);
+                        }
+                    }
+                }
             });
 
             ui.add_space(16.0);

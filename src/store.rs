@@ -25,6 +25,34 @@ impl Default for BatchModeSettings {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum EditContentMode {
+    #[default]
+    Custom,
+    Random,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct EditBeforeDeleteSettings {
+    pub enabled: bool,
+    pub mode: EditContentMode,
+    pub custom_text: String,
+    pub random_length: u32,
+}
+
+impl Default for EditBeforeDeleteSettings {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            mode: EditContentMode::Custom,
+            custom_text: "[deleted]".to_string(),
+            random_length: 16,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct Settings {
@@ -33,6 +61,7 @@ pub struct Settings {
     pub lang: String,
     pub history_path: String,
     pub batch_mode: BatchModeSettings,
+    pub edit_before_delete: EditBeforeDeleteSettings,
 }
 
 impl Default for Settings {
@@ -43,6 +72,7 @@ impl Default for Settings {
             lang: "en".to_string(),
             history_path: String::new(),
             batch_mode: BatchModeSettings::default(),
+            edit_before_delete: EditBeforeDeleteSettings::default(),
         }
     }
 }
@@ -106,5 +136,24 @@ mod tests {
         assert!(parsed.batch_mode.enabled);
         assert_eq!(parsed.batch_mode.min_batch, 300);
         assert_eq!(parsed.batch_mode.max_break_min, 90);
+        assert!(!parsed.edit_before_delete.enabled);
+        assert_eq!(parsed.edit_before_delete.mode, EditContentMode::Custom);
+        assert_eq!(parsed.edit_before_delete.random_length, 16);
+    }
+
+    #[test]
+    fn edit_before_delete_settings_roundtrip() {
+        let mut settings = Settings::default();
+        settings.edit_before_delete.enabled = true;
+        settings.edit_before_delete.mode = EditContentMode::Random;
+        settings.edit_before_delete.custom_text = "wiped".to_string();
+        settings.edit_before_delete.random_length = 32;
+
+        let json = serde_json::to_string(&settings).unwrap();
+        let decoded: Settings = serde_json::from_str(&json).unwrap();
+        assert!(decoded.edit_before_delete.enabled);
+        assert_eq!(decoded.edit_before_delete.mode, EditContentMode::Random);
+        assert_eq!(decoded.edit_before_delete.custom_text, "wiped");
+        assert_eq!(decoded.edit_before_delete.random_length, 32);
     }
 }

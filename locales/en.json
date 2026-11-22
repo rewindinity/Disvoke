@@ -2,6 +2,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "pack": "Data Pack",
+    "directDm": "Direct DM",
     "review": "Review",
     "progress": "Deletion",
     "settings": "Settings"
@@ -15,6 +16,7 @@
     "statDMs": "DM conversations",
     "statSelected": "Selected for deletion",
     "loadPack": "Load data pack →",
+    "directDm": "Clear DM by ID →",
     "settings": "Settings"
   },
   "pack": {
@@ -65,7 +67,31 @@
     "logBatchMode": "📦 Batch mode: {min}–{max} msg/batch, breaks {breakMin}–{breakMax} min",
     "logBatchStart": "📦 Batch {index}/{total} started — {size} messages",
     "logBatchBreak": "⏸ Batch {index}/{total} done — break ~{mins} min before next batch",
-    "batchBreakStatus": "⏸ Break between batches — ~{mins} min remaining"
+    "batchBreakStatus": "⏸ Break between batches — ~{mins} min remaining",
+    "logEditCustom": "✏ Edit before delete: custom text",
+    "logEditRandom": "✏ Edit before delete: random content ({len} chars)",
+    "logEdited": "✏ Edited message #{id}",
+    "logEditError": "⚠ Failed to edit #{id}{detail} — deleting anyway"
+  },
+  "dm": {
+    "title": "Clear Direct Message",
+    "subtitle": "Fetch and clear your messages from a specific DM conversation directly using your token and the DM Channel ID (or recipient User ID) — no privacy pack needed.",
+    "connectionSection": "DM Target",
+    "channelLabel": "DM Channel ID or User ID",
+    "channelPlaceholder": "e.g. 123456789012345678 or discord.com/channels/@me/...",
+    "channelHint": "Enable Developer Mode in Discord -> right-click the DM or user -> Copy ID (or paste the DM URL).",
+    "searchLabel": "Search in content:",
+    "searchPlaceholder": "e.g. hello (leave empty = all)",
+    "fetchBtn": "Fetch messages",
+    "cancelBtn": "Cancel",
+    "fetching": "⏳ Fetching messages... scanned {scanned}, found {found} yours",
+    "fetchedSummary": "✓ {name} ({id}) — {found} messages found ({selected} selected)",
+    "noMessages": "No deletable messages from your account were found in this DM.",
+    "noChannelId": "Please enter a DM Channel ID or User ID.",
+    "invalidChannelId": "Invalid ID format. Enter a numeric Discord ID or DM URL.",
+    "stopped": "Fetching cancelled by user.",
+    "reviewBtn": "Review messages →",
+    "deleteNowBtn": "🗑 Delete selected messages"
   },
   "settings": {
     "title": "Settings",
@@ -104,7 +130,18 @@
     "historyClear": "🗑 Clear from memory",
     "historyLoadErr": "Invalid history file.",
     "historyLoaded": "Loaded {count} deleted IDs.",
-    "historyCleared": "History cleared from memory."
+    "historyCleared": "History cleared from memory.",
+    "editSection": "Edit Before Deleting",
+    "editEnabledLabel": "Edit message content before deleting",
+    "editEnabledHint": "Overwrites each message's text before deleting it. Adds one extra API request per message.",
+    "editModeLabel": "Replacement content mode",
+    "editModeCustom": "Specific text",
+    "editModeRandom": "Random content",
+    "editCustomLabel": "Replacement text",
+    "editCustomPlaceholder": "e.g. [deleted]",
+    "editCustomHint": "Text that will replace each message before deletion (max 2000 characters).",
+    "editRandomLenLabel": "Random content length (characters)",
+    "editRandomLenHint": "Each message will be overwritten with a fresh random alphanumeric string of this length (1–2000)."
   },
   "confirm": {
     "title": "⚠️ WARNING",
