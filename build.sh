@@ -16,6 +16,9 @@ case "$TARGET" in
   windows)
     cargo build --release --target x86_64-pc-windows-gnu
     ;;
+  windows-arm)
+    cargo build --release --target aarch64-pc-windows-msvc
+    ;;
   mac)
     cargo build --release --target x86_64-apple-darwin
     ;;
@@ -23,7 +26,7 @@ case "$TARGET" in
     cargo build --release --target aarch64-apple-darwin
     ;;
   *)
-    echo "Unknown target: '$TARGET'. Valid: native, linux, linux-arm, windows, mac, mac-arm" >&2
+    echo "Unknown target: '$TARGET'. Valid: native, linux, linux-arm, windows, windows-arm, mac, mac-arm" >&2
     exit 1
     ;;
 esac
